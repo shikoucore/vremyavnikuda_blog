@@ -1,7 +1,7 @@
 ---
 title: "Personal Blog"
 description: "A minimalist developer blog built with Astro and Three.js"
-github: "https://github.com/shikoucore/vremyavnikuda_blog"
+github: "https://github.com/vremyavnikuda"
 tags: ["astro", "typescript", "threejs"]
 featured: true
 lang: en
