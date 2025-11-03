@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
-import HeroCanvas from '@components/HeroCanvas.astro';
 import { getCollection } from 'astro:content';
 import { getLangFromUrl, useTranslations, getLocalizedPath } from '../i18n/utils';
 
@@ -15,7 +14,6 @@ const allPosts = (await getCollection('blog'))
 
 <BaseLayout>
   <div class="max-w-4xl mx-auto px-4 py-16">
-    <HeroCanvas />
     <section class="mb-24">
       <h1 class="text-4xl md:text-5xl font-bold mb-6">
         {t('home.greeting')}
