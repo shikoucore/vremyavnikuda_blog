@@ -1,0 +1,39 @@
+---
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="border-t border-[var(--color-border)] mt-24">
+  <div class="max-w-4xl mx-auto px-4 py-12">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+      <div class="text-center md:text-left">
+        <p class="text-[var(--color-text-secondary)] text-sm">
+          © {currentYear} vremyavnikuda. Built with <a href="https://astro.build" target="_blank" rel="noopener noreferrer" class="hover:text-primary-600 dark:hover:text-primary-400">Astro</a>
+        </p>
+      </div>
+      
+      <div class="flex gap-6">
+        <a 
+          href="/rss.xml" 
+          class="text-[var(--color-text-secondary)] hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+          aria-label="RSS Feed"
+        >
+          RSS
+        </a>
+        <a 
+          href="https://github.com/shikoucore" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          class="text-[var(--color-text-secondary)] hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+        >
+          GitHub
+        </a>
+        <a 
+          href="/privacy" 
+          class="text-[var(--color-text-secondary)] hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+        >
+          Privacy
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>

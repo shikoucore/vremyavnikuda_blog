@@ -1,0 +1,47 @@
+{
+  "name": "vremyavnikuda_blog",
+  "version": "1.0.0",
+  "description": "Personal developer blog with Astro + Three.js",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shikoucore/vremyavnikuda_blog.git"
+  },
+  "keywords": [
+    "blog",
+    "astro",
+    "threejs",
+    "personal"
+  ],
+  "author": "vremyavnikuda",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/shikoucore/vremyavnikuda_blog/issues"
+  },
+  "homepage": "https://github.com/shikoucore/vremyavnikuda_blog#readme",
+  "dependencies": {
+    "@astrojs/mdx": "^4.3.9",
+    "@astrojs/react": "^4.4.1",
+    "@astrojs/rss": "^4.0.13",
+    "@astrojs/sitemap": "^3.6.0",
+    "@astrojs/tailwind": "^6.0.2",
+    "@types/three": "^0.181.0",
+    "astro": "^5.15.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tailwindcss": "^3.4.18",
+    "three": "^0.181.0",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.5"
+  }
+}

@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-text-primary: #1a1a1a;
+    --color-text-secondary: #666;
+    --color-bg-primary: #ffffff;
+    --color-bg-secondary: #f9fafb;
+    --color-border: #e5e7eb;
+  }
+
+  .dark {
+    --color-text-primary: #f9fafb;
+    --color-text-secondary: #d1d5db;
+    --color-bg-primary: #1a1a1a;
+    --color-bg-secondary: #111827;
+    --color-border: #374151;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply text-[var(--color-text-primary)] bg-[var(--color-bg-primary)];
+    @apply antialiased;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .prose {
+    @apply max-w-none;
+  }
+  
+  .prose a {
+    @apply text-primary-600 dark:text-primary-400 hover:underline;
+  }
+  
+  .prose code {
+    @apply bg-[var(--color-bg-secondary)] px-1.5 py-0.5 rounded text-sm;
+  }
+  
+  .prose pre {
+    @apply bg-[var(--color-bg-secondary)] p-4 rounded-lg overflow-x-auto;
+  }
+}

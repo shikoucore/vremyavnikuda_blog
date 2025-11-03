@@ -1,0 +1,82 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+import HeroCanvas from '@components/HeroCanvas.astro';
+import { getCollection } from 'astro:content';
+
+const allPosts = (await getCollection('blog'))
+  .filter(post => !post.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+---
+
+<BaseLayout>
+  <div class="max-w-4xl mx-auto px-4 py-16">
+    <HeroCanvas />
+    <section class="mb-24">
+      <h1 class="text-4xl md:text-5xl font-bold mb-6">
+        Hi, I'm vremyavnikuda
+      </h1>
+      <p class="text-xl text-[var(--color-text-secondary)] mb-8 max-w-2xl">
+        Software developer sharing insights about programming, web development, and technology.
+      </p>
+      <div class="flex gap-4">
+        <a 
+          href="/blog" 
+          class="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          Read the blog
+        </a>
+        <a 
+          href="/projects" 
+          class="px-6 py-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors"
+        >
+          View projects
+        </a>
+      </div>
+    </section>
+
+    {allPosts.length > 0 && (
+      <section>
+        <h2 class="text-3xl font-bold mb-8">Latest Posts</h2>
+        <div class="space-y-8">
+          {allPosts.map((post) => (
+            <article class="group">
+              <a href={`/blog/${post.slug}`} class="block">
+                <time class="text-sm text-[var(--color-text-secondary)]">
+                  {post.data.pubDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </time>
+                <h3 class="text-2xl font-semibold mt-2 mb-3 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                  {post.data.title}
+                </h3>
+                <p class="text-[var(--color-text-secondary)]">
+                  {post.data.description}
+                </p>
+                {post.data.tags.length > 0 && (
+                  <div class="flex gap-2 mt-3">
+                    {post.data.tags.map((tag) => (
+                      <span class="text-xs px-2 py-1 bg-[var(--color-bg-secondary)] rounded">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </a>
+            </article>
+          ))}
+        </div>
+        <div class="mt-12">
+          <a 
+            href="/blog" 
+            class="inline-flex items-center text-primary-600 dark:text-primary-400 hover:underline"
+          >
+            View all posts →
+          </a>
+        </div>
+      </section>
+    )}
+  </div>
+</BaseLayout>
