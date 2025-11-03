@@ -65,7 +65,6 @@ export default function HeroCanvas() {
     const velocities = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
 
-    const cubeHalf = cubeSize / 2 - 1;
     for (let i = 0; i < particleCount * 3; i += 3) {
       positions[i] = (Math.random() - 0.5) * (cubeSize - 2);
       positions[i + 1] = (Math.random() - 0.5) * (cubeSize - 2);

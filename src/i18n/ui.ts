@@ -59,6 +59,11 @@ export const ui = {
     'footer.rss': 'RSS',
     'footer.github': 'GitHub',
     'footer.privacy': 'プライバシー',
+    'subscribe.title': 'ニュースレターを購読',
+    'subscribe.description': '新しい記事が公開されたときにメールで通知を受け取ります。',
+    'subscribe.placeholder': 'メールアドレスを入力',
+    'subscribe.button': '購読する',
+    'subscribe.privacy': 'スパムは送信しません。いつでも購読を解除できます。',
   },
   en: {
     'nav.home': 'Home',
@@ -113,6 +118,11 @@ export const ui = {
     'footer.rss': 'RSS',
     'footer.github': 'GitHub',
     'footer.privacy': 'Privacy',
+    'subscribe.title': 'Subscribe to Newsletter',
+    'subscribe.description': 'Get notified when new articles are published.',
+    'subscribe.placeholder': 'Enter your email',
+    'subscribe.button': 'Subscribe',
+    'subscribe.privacy': 'No spam. Unsubscribe anytime.',
   },
 } as const;
 

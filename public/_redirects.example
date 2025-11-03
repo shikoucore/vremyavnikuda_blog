@@ -1,0 +1,14 @@
+# Cloudflare Pages Redirects
+# Rename this file to _redirects to enable
+
+# Example: Redirect www to non-www
+# https://www.yourdomain.com/* https://yourdomain.com/:splat 301
+
+# Example: Force HTTPS (usually handled by Cloudflare automatically)
+# http://yourdomain.com/* https://yourdomain.com/:splat 301
+
+# Example: Redirect old blog paths
+# /old-blog/* /blog/:splat 301
+
+# Example: Custom 404 page
+# /* /404 404

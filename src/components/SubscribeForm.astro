@@ -1,0 +1,52 @@
+---
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+---
+
+<div class="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-lg p-6">
+  <h3 class="text-xl font-semibold mb-2">{t('subscribe.title')}</h3>
+  <p class="text-[var(--color-text-secondary)] mb-4">
+    {t('subscribe.description')}
+  </p>
+  
+  <form
+    action="https://buttondown.email/api/emails/embed-subscribe/player"
+    method="post"
+    target="popupwindow"
+    class="flex flex-col sm:flex-row gap-3"
+  >
+    <input
+      type="email"
+      name="email"
+      id="bd-email"
+      placeholder={t('subscribe.placeholder')}
+      required
+      class="flex-1 px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400 text-[var(--color-text)]"
+    />
+    <button
+      type="submit"
+      class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors whitespace-nowrap"
+    >
+      {t('subscribe.button')}
+    </button>
+  </form>
+  
+  <p class="text-xs text-[var(--color-text-secondary)] mt-3">
+    {t('subscribe.privacy')}
+  </p>
+</div>
+
+<script>
+  const form = document.querySelector('form[action*="buttondown"]');
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      const email = (form.querySelector('input[type="email"]') as HTMLInputElement)?.value;
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        e.preventDefault();
+        alert('Please enter a valid email address');
+      }
+    });
+  }
+</script>

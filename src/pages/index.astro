@@ -2,6 +2,7 @@
 import BaseLayout from '@layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 import { getLangFromUrl, useTranslations, getLocalizedPath } from '../i18n/utils';
+import SubscribeForm from '@components/SubscribeForm.astro';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -35,6 +36,10 @@ const allPosts = (await getCollection('blog'))
           {t('home.viewProjects')}
         </a>
       </div>
+    </section>
+
+    <section class="mb-24">
+      <SubscribeForm />
     </section>
 
     {allPosts.length > 0 && (

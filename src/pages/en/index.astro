@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import SubscribeForm from '@components/SubscribeForm.astro';
 
 const lang = 'en';
 
@@ -33,6 +34,10 @@ const allPosts = (await getCollection('blog'))
           View projects
         </a>
       </div>
+    </section>
+
+    <section class="mb-24">
+      <SubscribeForm />
     </section>
 
     {allPosts.length > 0 && (

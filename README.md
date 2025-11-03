@@ -22,12 +22,29 @@ npm install
 # Dev сервер
 npm run dev
 
+# Проверка типов
+npm run check
+
 # Сборка
 npm run build
 
 # Preview production build
 npm run preview
 ```
+
+## Деплой
+
+Проект настроен для автоматического деплоя на **Cloudflare Pages**:
+
+1. Подключите репозиторий к Cloudflare Pages
+2. Настройки билда:
+   - Build command: `npm run build`
+   - Build output directory: `dist`
+   - Node version: `20`
+
+GitHub Actions автоматически проверяет каждый push и PR.
+
+**Подробная инструкция:** См. [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 ## Технологии
 
