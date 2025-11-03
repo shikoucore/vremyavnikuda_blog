@@ -5,19 +5,13 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: [
-          'system-ui',
-          '-apple-system',
-          'BlinkMacSystemFont',
-          'Segoe UI',
-          'Roboto',
-          'sans-serif',
+          'Cascadia Code',
+          'Cascadia Mono',
+          'monospace',
         ],
         mono: [
-          'ui-monospace',
-          'SFMono-Regular',
-          'Menlo',
-          'Monaco',
-          'Consolas',
+          'Cascadia Code',
+          'Cascadia Mono',
           'monospace',
         ],
       },

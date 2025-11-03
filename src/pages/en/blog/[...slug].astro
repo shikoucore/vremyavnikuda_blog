@@ -1,12 +1,11 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
 import { getCollection, type CollectionEntry } from 'astro:content';
-import { useTranslations, getLocalizedPath } from '../../i18n/utils';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
   return posts
-    .filter(post => !post.data.draft && post.data.lang === 'ja')
+    .filter(post => !post.data.draft && post.data.lang === 'en')
     .map((post) => ({
       params: { slug: post.slug },
       props: post,
@@ -17,8 +16,6 @@ type Props = CollectionEntry<'blog'>;
 
 const post = Astro.props;
 const { Content } = await post.render();
-const t = useTranslations('ja');
-const lang = 'ja';
 ---
 
 <BaseLayout 
@@ -54,10 +51,10 @@ const lang = 'ja';
 
     <footer class="mt-16 pt-8 border-t border-[var(--color-border)]">
       <a 
-        href={getLocalizedPath('/blog', lang)}
+        href="/en/blog" 
         class="inline-flex items-center text-primary-400 hover:underline"
       >
-        {t('blog.backToBlog')}
+        ← Back to blog
       </a>
     </footer>
   </article>

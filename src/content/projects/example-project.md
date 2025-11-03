@@ -1,9 +1,10 @@
 ---
-title: "Personal Blog"
-description: "A minimalist developer blog built with Astro and Three.js"
+title: "個人ブログ"
+description: "AstroとThree.jsで構築されたミニマリストな開発者ブログ"
 github: "https://github.com/shikoucore/vremyavnikuda_blog"
 tags: ["astro", "typescript", "threejs"]
 featured: true
+lang: ja
 ---
 
-This is the blog you're currently reading! Built with modern web technologies and focused on performance and simplicity.
+これはあなたが現在読んでいるブログです！最新のWeb技術で構築され、パフォーマンスとシンプルさに焦点を当てています。

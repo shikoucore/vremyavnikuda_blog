@@ -14,6 +14,13 @@ export default defineConfig({
     sitemap(),
   ],
   site: 'https://yourdomain.com',
+  i18n: {
+    defaultLocale: 'ja',
+    locales: ['ja', 'en'],
+    routing: {
+      prefixDefaultLocale: false,
+    },
+  },
   markdown: {
     shikiConfig: {
       theme: 'github-dark',

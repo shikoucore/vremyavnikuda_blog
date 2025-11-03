@@ -1,6 +1,7 @@
 ---
 import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
 import '../styles/global.css';
 
 interface Props {
@@ -11,9 +12,12 @@ interface Props {
   noFooter?: boolean;
 }
 
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
 const {
-  title = 'vremyavnikuda - Developer Blog',
-  description = 'Personal blog about software development, programming, and technology',
+  title = t('site.title'),
+  description = t('site.description'),
   ogImage = '/og-default.png',
   noHeader = false,
   noFooter = false,
@@ -23,7 +27,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={lang}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

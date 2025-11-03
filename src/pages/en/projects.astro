@@ -1,27 +1,25 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
-import { getLangFromUrl, useTranslations } from '../i18n/utils';
 
-const lang = getLangFromUrl(Astro.url);
-const t = useTranslations(lang);
+const lang = 'en';
 
 const projects = (await getCollection('projects'))
   .filter(project => project.data.lang === lang)
   .sort((a, b) => (b.data.featured ? 1 : 0) - (a.data.featured ? 1 : 0));
 ---
 
-<BaseLayout title={`${t('projects.title')} - vremyavnikuda`} description={t('projects.description')}>
+<BaseLayout title="Projects - vremyavnikuda" description="Personal projects and open source contributions">
   <div class="max-w-4xl mx-auto px-4 py-16">
     <header class="mb-12">
-      <h1 class="text-4xl font-bold mb-4">{t('projects.title')}</h1>
+      <h1 class="text-4xl font-bold mb-4">Projects</h1>
       <p class="text-xl text-[var(--color-text-secondary)]">
-        {t('projects.description')}
+        Things I've built and contributed to
       </p>
     </header>
 
     {projects.length === 0 ? (
-      <p class="text-[var(--color-text-secondary)]">{t('projects.noProjects')}</p>
+      <p class="text-[var(--color-text-secondary)]">Projects coming soon!</p>
     ) : (
       <div class="grid md:grid-cols-2 gap-6">
         {projects.map(async (project) => {
@@ -54,7 +52,7 @@ const projects = (await getCollection('projects'))
                     rel="noopener noreferrer"
                     class="text-primary-400 hover:underline text-sm"
                   >
-                    {t('projects.visit')}
+                    Visit →
                   </a>
                 )}
                 {project.data.github && (
@@ -64,7 +62,7 @@ const projects = (await getCollection('projects'))
                     rel="noopener noreferrer"
                     class="text-primary-400 hover:underline text-sm"
                   >
-                    {t('projects.github')}
+                    GitHub →
                   </a>
                 )}
               </div>

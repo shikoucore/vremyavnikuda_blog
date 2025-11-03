@@ -1,26 +1,27 @@
 ---
-title: "Building a Fast Blog with Astro"
-description: "Why I chose Astro for my personal blog and how it delivers excellent performance"
+title: "Astroで高速ブログを構築"
+description: "個人ブログにAstroを選んだ理由と優れたパフォーマンスを実現する方法"
 pubDate: 2025-11-02
 tags: ["astro", "webdev", "performance"]
 draft: false
+lang: ja
 ---
 
-# Building a Fast Blog with Astro
+# Astroで高速ブログを構築
 
-When deciding on a tech stack for my personal blog, performance and simplicity were my top priorities. That's why I chose [Astro](https://astro.build).
+個人ブログの技術スタックを決定する際、パフォーマンスとシンプルさが最優先事項でした。そのため、[Astro](https://astro.build)を選びました。
 
-## Why Astro?
+## なぜAstro？
 
-Astro is a modern static site generator that ships zero JavaScript by default. Here's why it's perfect for a blog:
+Astroは、デフォルトでゼロJavaScriptを配信する最新の静的サイトジェネレーターです。ブログに最適な理由は次のとおりです：
 
-### 1. Performance First
+### 1. パフォーマンス優先
 
-Astro generates static HTML at build time, resulting in incredibly fast page loads. No hydration cost, no large JavaScript bundles.
+Astroはビルド時に静的HTMLを生成し、非常に高速なページ読み込みを実現します。ハイドレーションコストなし、大きなJavaScriptバンドルなし。
 
-### 2. Component Islands
+### 2. コンポーネントアイランド
 
-With Astro's Islands architecture, you can add interactive components only where needed:
+AstroのIslandsアーキテクチャを使用すると、必要な場所にのみインタラクティブコンポーネントを追加できます：
 
 ```astro
 ---
@@ -30,18 +31,18 @@ import HeavyComponent from './HeavyComponent';
 <HeavyComponent client:idle />
 ```
 
-### 3. Content Collections
+### 3. コンテンツコレクション
 
-Type-safe content management with Zod validation makes working with MDX files a breeze.
+Zodバリデーションによる型安全なコンテンツ管理により、MDXファイルの操作が簡単になります。
 
-### 4. Framework Agnostic
+### 4. フレームワーク非依存
 
-Use React, Vue, Svelte, or any framework - only for the components that need it.
+React、Vue、Svelte、または任意のフレームワークを使用できます - 必要なコンポーネントにのみ。
 
-## The Result
+## 結果
 
-This blog loads in under 1 second on 3G and scores 100 on Lighthouse. That's the power of shipping less JavaScript.
+このブログは3Gで1秒未満で読み込まれ、Lighthouseで100点を獲得します。これがJavaScriptを減らす力です。
 
-## Conclusion
+## 結論
 
-If you're building a content-focused website, give Astro a try. You won't regret it.
+コンテンツ重視のウェブサイトを構築している場合は、Astroを試してみてください。後悔しません。

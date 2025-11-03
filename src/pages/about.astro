@@ -1,37 +1,39 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
-<BaseLayout title="About - vremyavnikuda" description="About me and this blog">
+<BaseLayout title={`${t('about.title')} - vremyavnikuda`} description={t('site.description')}>
   <div class="max-w-3xl mx-auto px-4 py-16">
-    <h1 class="text-4xl font-bold mb-8">About</h1>
+    <h1 class="text-4xl font-bold mb-8">{t('about.title')}</h1>
     
     <div class="prose prose-lg max-w-none space-y-6">
       <p class="text-xl text-[var(--color-text-secondary)]">
-        Hi! I'm a software developer passionate about building elegant solutions to complex problems.
+        {t('about.intro')}
       </p>
 
       <section>
-        <h2 class="text-2xl font-semibold mb-4">What I Do</h2>
+        <h2 class="text-2xl font-semibold mb-4">{t('about.whatIDo')}</h2>
         <p>
-          I work on web development, focusing on modern JavaScript frameworks, performance optimization,
-          and creating delightful user experiences. This blog is where I share what I learn along the way.
+          {t('about.whatIDoText')}
         </p>
       </section>
 
       <section>
-        <h2 class="text-2xl font-semibold mb-4">Tech Stack</h2>
+        <h2 class="text-2xl font-semibold mb-4">{t('about.techStack')}</h2>
         <p>
-          I work with TypeScript, React, Node.js, and various other tools in the JavaScript ecosystem.
-          I'm always exploring new technologies and best practices.
+          {t('about.techStackText')}
         </p>
       </section>
 
       <section>
-        <h2 class="text-2xl font-semibold mb-4">Contact</h2>
+        <h2 class="text-2xl font-semibold mb-4">{t('about.contact')}</h2>
         <p>
-          Feel free to reach out on <a href="https://github.com/shikoucore" target="_blank" rel="noopener noreferrer" class="text-primary-400 hover:underline">GitHub</a>
-          or subscribe to the <a href="/rss.xml" class="text-primary-400 hover:underline">RSS feed</a> to stay updated.
+          {t('about.contactText1')} <a href="https://github.com/shikoucore" target="_blank" rel="noopener noreferrer" class="text-primary-400 hover:underline">{t('about.github')}</a>
+          {t('about.contactText2')} <a href={lang === 'en' ? '/en/rss.xml' : '/rss.xml'} class="text-primary-400 hover:underline">{t('about.rss')}</a> {t('about.contactText3')}
         </p>
       </section>
     </div>

@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 @layer base {
+  @font-face {
+    font-family: 'Cascadia Code';
+    src: local('Cascadia Code'), local('CascadiaCode');
+    font-display: swap;
+  }
+
   :root {
     --color-text-primary: #f9fafb;
     --color-text-secondary: #d1d5db;
@@ -18,6 +24,7 @@
   body {
     @apply text-[var(--color-text-primary)] bg-[var(--color-bg-primary)];
     @apply antialiased;
+    font-family: 'Cascadia Code', 'Cascadia Mono', monospace;
   }
 
   @media (prefers-reduced-motion: reduce) {

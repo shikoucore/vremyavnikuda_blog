@@ -1,9 +1,15 @@
 ---
+import LanguagePicker from './LanguagePicker.astro';
+import { getLangFromUrl, useTranslations, getLocalizedPath } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
 const navLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/blog', label: 'Blog' },
-  { href: '/projects', label: 'Projects' },
-  { href: '/about', label: 'About' },
+  { href: getLocalizedPath('/', lang), label: t('nav.home') },
+  { href: getLocalizedPath('/blog', lang), label: t('nav.blog') },
+  { href: getLocalizedPath('/projects', lang), label: t('nav.projects') },
+  { href: getLocalizedPath('/about', lang), label: t('nav.about') },
 ];
 
 const currentPath = Astro.url.pathname;
@@ -12,11 +18,13 @@ const currentPath = Astro.url.pathname;
 <header class="sticky top-0 z-50 bg-[var(--color-bg-primary)]/80 backdrop-blur-sm border-b border-[var(--color-border)]">
   <nav class="max-w-4xl mx-auto px-4 py-4">
     <div class="flex items-center justify-between">
-      <a href="/" class="text-xl font-bold hover:text-primary-400 transition-colors">
+      <a href={getLocalizedPath('/', lang)} class="text-xl font-bold hover:text-primary-400 transition-colors">
         vremyavnikuda
       </a>
       
-      <ul class="flex gap-6">
+      <div class="flex items-center gap-6">
+        <LanguagePicker />
+        <ul class="flex gap-6">
         {navLinks.map(({ href, label }) => (
           <li>
             <a
@@ -30,7 +38,8 @@ const currentPath = Astro.url.pathname;
             </a>
           </li>
         ))}
-      </ul>
+        </ul>
+      </div>
     </div>
   </nav>
 </header>
