@@ -4,17 +4,9 @@
 
 @layer base {
   :root {
-    --color-text-primary: #1a1a1a;
-    --color-text-secondary: #666;
-    --color-bg-primary: #ffffff;
-    --color-bg-secondary: #f9fafb;
-    --color-border: #e5e7eb;
-  }
-
-  .dark {
     --color-text-primary: #f9fafb;
     --color-text-secondary: #d1d5db;
-    --color-bg-primary: #1a1a1a;
+    --color-bg-primary: #0a0a0a;
     --color-bg-secondary: #111827;
     --color-border: #374151;
   }
@@ -49,7 +41,7 @@
   }
   
   .prose a {
-    @apply text-primary-600 dark:text-primary-400 hover:underline;
+    @apply text-primary-400 hover:text-primary-300 hover:underline;
   }
   
   .prose code {
@@ -58,5 +50,13 @@
   
   .prose pre {
     @apply bg-[var(--color-bg-secondary)] p-4 rounded-lg overflow-x-auto;
+  }
+  
+  .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    @apply text-[var(--color-text-primary)] font-bold;
+  }
+  
+  .prose p {
+    @apply text-[var(--color-text-secondary)];
   }
 }
