@@ -1,14 +1,17 @@
 name: Deploy to Cloudflare Pages
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
     branches: [main]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Запускаем деплой только если CI прошел успешно
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     permissions:
       contents: read
       deployments: write
