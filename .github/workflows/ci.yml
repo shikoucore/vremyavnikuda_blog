@@ -1,4 +1,4 @@
-name: CI/CD
+name: CI
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  build:
-    name: Build and Test
+  check:
+    name: Code Quality Checks
     runs-on: ubuntu-latest
 
     steps:
@@ -24,44 +24,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check
+      - name: 1. Type check
         run: npm run check
 
-      - name: Build site
+      - name: 2. Build verification
         run: npm run build
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/
-          retention-days: 1
+      - name: 3. Check dist output
+        run: |
+          if [ ! -f "dist/index.html" ]; then
+            echo "Error: index.html not found in dist/"
+            exit 1
+          fi
+          echo "Build output verified: dist/index.html exists"
 
-  deploy:
-    name: Deploy to Cloudflare Pages
-    runs-on: ubuntu-latest
-    # Запускаем только если build успешен и это push в main
-    needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    permissions:
-      contents: read
-      deployments: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist
-
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: blog
-          directory: dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+      - name: 4. Validate sitemap
+        run: |
+          if [ ! -f "dist/sitemap-0.xml" ]; then
+            echo "Warning: sitemap not found"
+          else
+            echo "Sitemap generated successfully"
+          fi
