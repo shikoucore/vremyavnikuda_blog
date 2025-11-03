@@ -37,5 +37,4 @@ pnpm-debug.log*
 
 # Development docs (keep locally only)
 site_plan.md
-todo.md
 DEPLOYMENT.md
