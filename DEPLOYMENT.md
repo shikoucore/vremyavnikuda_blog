@@ -168,3 +168,4 @@ GitHub Actions workflow (`.github/workflows/ci.yml`) запускается:
 - Cloudflare Pages: [Cloudflare Community](https://community.cloudflare.com/)
 - Vercel: [Vercel Support](https://vercel.com/support)
 - Astro: [Astro Discord](https://astro.build/chat)
+
