@@ -8,6 +8,7 @@ featured: true
 lang: en
 status: "active"
 version: "0.1.3"
+parentProject: "hyprshot-rs"
 roadmap:
   - version: "0.1.0"
     releaseStatus: "release"

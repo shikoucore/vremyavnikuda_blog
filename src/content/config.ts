@@ -27,6 +27,7 @@ const projects = defineCollection({
     // Roadmap fields
     status: z.enum(['active', 'maintenance', 'completed', 'archived']).default('active'),
     version: z.string().optional(),
+    parentProject: z.string().optional(), // ID родительского проекта для ветвления
     roadmap: z.array(z.object({
       version: z.string(),
       releaseStatus: z.enum(['release', 'dev']),

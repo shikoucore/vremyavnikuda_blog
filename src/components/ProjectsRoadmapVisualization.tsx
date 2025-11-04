@@ -13,6 +13,7 @@ interface Project {
   tags: string[];
   github?: string;
   link?: string;
+  parentProject?: string;
   roadmap?: Array<{
     version: string;
     releaseStatus: 'release' | 'dev';
@@ -55,32 +56,56 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
     // Clear previous content
     select(svgRef.current).selectAll('*').remove();
 
-    // Build cluster tree data
+    // Build tree data with parent-child relationships
+    const projectsMap = new Map<string, TreeNode>();
+    const rootProjects: TreeNode[] = [];
+
+    // First pass: create all project nodes with their versions
+    projects.forEach(project => {
+      const versionNodes: TreeNode[] = project.roadmap?.map(milestone => ({
+        name: `v${milestone.version}`,
+        type: 'version' as const,
+        data: { 
+          version: milestone.version, 
+          releaseStatus: milestone.releaseStatus,
+          items: milestone.items 
+        },
+      })) || [];
+
+      const projectNode: TreeNode = {
+        name: project.title,
+        type: 'project',
+        data: project,
+        children: [...versionNodes], // Start with versions
+      };
+
+      projectsMap.set(project.title, projectNode);
+    });
+
+    // Second pass: build hierarchy based on parentProject
+    projects.forEach(project => {
+      const projectNode = projectsMap.get(project.title)!;
+      
+      if (project.parentProject) {
+        // This project is a child of another project
+        const parentNode = projectsMap.get(project.parentProject);
+        if (parentNode) {
+          // Add this project as child to parent (after versions)
+          parentNode.children!.push(projectNode);
+        } else {
+          // Parent not found, add to root
+          rootProjects.push(projectNode);
+        }
+      } else {
+        // No parent, add to root
+        rootProjects.push(projectNode);
+      }
+    });
+
     const treeData: TreeNode = {
       name: 'vremyavnikuda',
       type: 'root',
-      children: projects.map(project => {
-        const projectNode: TreeNode = {
-          name: project.title,
-          type: 'project',
-          data: project,
-        };
-
-        // Add versions if roadmap exists
-        if (project.roadmap && project.roadmap.length > 0) {
-          projectNode.children = project.roadmap.map(milestone => ({
-            name: `v${milestone.version}`,
-            type: 'version' as const,
-            data: { 
-              version: milestone.version, 
-              releaseStatus: milestone.releaseStatus,
-              items: milestone.items 
-            },
-          }));
-        }
-
-        return projectNode;
-      }),
+      children: rootProjects,
     };
 
     // Dimensions
