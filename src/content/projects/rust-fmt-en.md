@@ -6,6 +6,9 @@ link: "https://marketplace.visualstudio.com/items?itemName=vremyavnikuda.rust-fm
 tags: ["rust", "typescript", "vscode", "formatter", "developer-tools"]
 featured: true
 lang: en
+projectType: "project"
+category: "projects"
+parentProject: "projects"
 status: "active"
 version: "0.1.0"
 roadmap:

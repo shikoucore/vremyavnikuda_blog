@@ -6,6 +6,9 @@ link: "https://crates.io/crates/hyprshot-rs"
 tags: ["rust", "linux", "hyprland", "wayland", "screenshot"]
 featured: true
 lang: ja
+projectType: "project"
+category: "projects"
+parentProject: "projects"
 status: "active"
 version: "0.1.3"
 roadmap:

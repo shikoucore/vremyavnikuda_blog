@@ -5,6 +5,9 @@ github: "https://github.com/vremyavnikuda/sysinfo_utils"
 tags: ["rust", "system", "os"]
 featured: true
 lang: en
+projectType: "project"
+category: "projects"
+parentProject: "projects"
 status: "active"
 version: "0.1.0"
 roadmap:

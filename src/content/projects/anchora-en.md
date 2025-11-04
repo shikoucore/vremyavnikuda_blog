@@ -6,6 +6,9 @@ link: "https://marketplace.visualstudio.com/items?itemName=vremyavnikuda.anchora
 tags: ["rust", "typescript", "vscode", "task-manager", "developer-tools"]
 featured: true
 lang: en
+projectType: "project"
+category: "projects"
+parentProject: "projects"
 status: "active"
 version: "0.1.1"
 roadmap:

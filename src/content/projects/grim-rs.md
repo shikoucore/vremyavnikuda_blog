@@ -6,9 +6,11 @@ link: "https://crates.io/crates/grim-rs"
 tags: ["rust", "linux", "wayland"]
 featured: true
 lang: ja
+projectType: "project"
+category: "projects"
+parentProject: "hyprshot-rs"
 status: "active"
 version: "0.1.3"
-parentProject: "hyprshot-rs"
 roadmap:
   - version: "0.1.0"
     releaseStatus: "release"

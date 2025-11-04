@@ -13,6 +13,8 @@ interface Project {
   tags: string[];
   github?: string;
   link?: string;
+  projectType?: 'category' | 'project' | 'contribution';
+  category?: 'projects' | 'contributing';
   parentProject?: string;
   roadmap?: Array<{
     version: string;
