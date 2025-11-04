@@ -24,6 +24,18 @@ const projects = defineCollection({
     tags: z.array(z.string()).default([]),
     featured: z.boolean().default(false),
     lang: z.enum(['ja', 'en']).default('ja'),
+    // Project type and hierarchy
+    projectType: z.enum(['category', 'project', 'contribution']).default('project'),
+    category: z.enum(['projects', 'contributing']).optional(),
+    parentProject: z.string().optional(), // ID родительского проекта для ветвления
+    // Roadmap fields
+    status: z.enum(['active', 'maintenance', 'completed', 'archived']).default('active'),
+    version: z.string().optional(),
+    roadmap: z.array(z.object({
+      version: z.string(),
+      releaseStatus: z.enum(['release', 'dev']),
+      items: z.array(z.string()).optional(),
+    })).optional(),
   }),
 });
 
