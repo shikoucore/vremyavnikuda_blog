@@ -23,11 +23,10 @@ function getPathForLang(targetLang: string) {
 }
 ---
 
-<div class="relative inline-block text-left">
+<div class="relative inline-block text-left lang-picker">
   <button
     type="button"
-    class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-bg-secondary)] transition-colors"
-    id="language-menu-button"
+    class="lang-picker-button inline-flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-[var(--color-bg-secondary)] transition-colors"
     aria-expanded="false"
     aria-haspopup="true"
   >
@@ -38,11 +37,9 @@ function getPathForLang(targetLang: string) {
   </button>
 
   <div
-    class="hidden absolute right-0 mt-2 w-32 rounded bg-[var(--color-bg-secondary)] border border-[var(--color-border)] shadow-lg"
-    id="language-menu"
+    class="lang-picker-menu hidden absolute right-0 mt-2 w-32 rounded bg-[var(--color-bg-secondary)] border border-[var(--color-border)] shadow-lg z-50"
     role="menu"
     aria-orientation="vertical"
-    aria-labelledby="language-menu-button"
   >
     {Object.entries(languages).map(([code, name]) => (
       <a
@@ -60,21 +57,41 @@ function getPathForLang(targetLang: string) {
 </div>
 
 <script>
-  const button = document.getElementById('language-menu-button');
-  const menu = document.getElementById('language-menu');
+  // Handle all language picker instances
+  document.querySelectorAll('.lang-picker').forEach(picker => {
+    const button = picker.querySelector('.lang-picker-button');
+    const menu = picker.querySelector('.lang-picker-menu');
 
-  if (button && menu) {
-    button.addEventListener('click', () => {
-      const isExpanded = button.getAttribute('aria-expanded') === 'true';
-      button.setAttribute('aria-expanded', String(!isExpanded));
-      menu.classList.toggle('hidden');
-    });
+    if (button && menu) {
+      button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isExpanded = button.getAttribute('aria-expanded') === 'true';
+        
+        // Close all other language pickers
+        document.querySelectorAll('.lang-picker').forEach(otherPicker => {
+          if (otherPicker !== picker) {
+            const otherButton = otherPicker.querySelector('.lang-picker-button');
+            const otherMenu = otherPicker.querySelector('.lang-picker-menu');
+            if (otherButton && otherMenu) {
+              otherButton.setAttribute('aria-expanded', 'false');
+              otherMenu.classList.add('hidden');
+            }
+          }
+        });
+        
+        // Toggle this picker
+        button.setAttribute('aria-expanded', String(!isExpanded));
+        menu.classList.toggle('hidden');
+      });
 
-    document.addEventListener('click', (e) => {
-      if (!button.contains(e.target as Node) && !menu.contains(e.target as Node)) {
-        button.setAttribute('aria-expanded', 'false');
-        menu.classList.add('hidden');
-      }
-    });
-  }
+      // Close when clicking outside
+      document.addEventListener('click', (e) => {
+        const target = e.target as Node;
+        if (!picker.contains(target)) {
+          button.setAttribute('aria-expanded', 'false');
+          menu.classList.add('hidden');
+        }
+      });
+    }
+  });
 </script>

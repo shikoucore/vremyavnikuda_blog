@@ -3,6 +3,8 @@ import { hierarchy, tree } from 'd3-hierarchy';
 import { select } from 'd3-selection';
 import { linkHorizontal } from 'd3-shape';
 import { zoom, zoomIdentity } from 'd3-zoom';
+import { useDeviceType } from '../hooks/useMediaQuery';
+import MobileProjectList from './MobileProjectList';
 
 interface Project {
   id: string;
@@ -35,6 +37,7 @@ interface TreeNode {
 }
 
 export default function ProjectsRoadmapVisualization({ projects }: Props) {
+  const deviceType = useDeviceType();
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<{
@@ -51,6 +54,11 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
     releaseStatus: 'release' | 'dev';
     items?: string[];
   } | null>(null);
+
+  // Render mobile view with accordion list
+  if (deviceType === 'mobile') {
+    return <MobileProjectList projects={projects} />;
+  }
 
   useEffect(() => {
     if (!svgRef.current || !projects || projects.length === 0) return;
@@ -110,10 +118,16 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       children: rootProjects,
     };
 
-    // Dimensions
+    // Dimensions adapted for device type
     const width = containerRef.current?.clientWidth || 1200;
-    const height = 800;
-    const margin = { top: 20, right: 120, bottom: 20, left: 120 };
+    const height = deviceType === 'tablet' ? 600 : 800;
+    const margin = deviceType === 'tablet' 
+      ? { top: 20, right: 40, bottom: 20, left: 60 }
+      : { top: 20, right: 120, bottom: 20, left: 120 };
+    
+    // Node radius based on device type - compact for tablet
+    const nodeRadius = deviceType === 'tablet' ? 10 : 12;
+    const touchTargetSize = 44; // iOS/Android recommended minimum touch target
 
     // Create SVG
     const svg = select(svgRef.current)
@@ -125,12 +139,14 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
     // Create container group for zoom
     const g = svg.append('g');
 
-    // Create tree layout (horizontal) with better spacing
+    // Create tree layout (horizontal) with adaptive spacing
     const treeLayout = tree<TreeNode>()
       .size([height - margin.top - margin.bottom, width - margin.left - margin.right])
       .separation((a, b) => {
-        // Increase spacing between nodes
-        return a.parent === b.parent ? 2 : 3;
+        // Compact spacing on tablet, but still touch-friendly
+        const baseSeparation = deviceType === 'tablet' ? 2 : 2;
+        const crossSeparation = deviceType === 'tablet' ? 2.5 : 3;
+        return a.parent === b.parent ? baseSeparation : crossSeparation;
       });
 
     // Create hierarchy
@@ -150,14 +166,14 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       if (d.y > maxY) maxY = d.y;
     });
 
-    // Calculate scale to fit everything
-    const padding = 100;
+    // Calculate scale to fit everything - more aggressive scaling on tablet
+    const padding = deviceType === 'tablet' ? 60 : 100;
     const dataWidth = maxY - minY + padding * 2;
     const dataHeight = maxX - minX + padding * 2;
     const scale = Math.min(
       (width - margin.left - margin.right) / dataWidth,
       (height - margin.top - margin.bottom) / dataHeight,
-      1 // Don't scale up, only down
+      deviceType === 'tablet' ? 0.8 : 1 // Scale down on tablet to fit more
     );
 
     // Calculate center offset
@@ -172,7 +188,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       archived: '#6b7280',
     };
 
-    // Draw links (horizontal)
+    // Draw links (horizontal) with adaptive styling
     const link = linkHorizontal<any, any>()
       .x(d => d.y)
       .y(d => d.x);
@@ -185,8 +201,8 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       .attr('d', link as any)
       .attr('fill', 'none')
       .attr('stroke', 'var(--color-border)')
-      .attr('stroke-width', 2)
-      .attr('opacity', 0.4);
+      .attr('stroke-width', deviceType === 'tablet' ? 2 : 2)
+      .attr('opacity', deviceType === 'tablet' ? 0.4 : 0.4);
 
     // Draw nodes
     const node = g
@@ -198,47 +214,101 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       .attr('transform', d => `translate(${d.y},${d.x})`);
 
     // Add rectangles for project nodes (clickable cards)
+    // Compact size for tablet with touch overlay
+    const rectWidth = deviceType === 'tablet' ? 120 : 160;
+    const rectHeight = deviceType === 'tablet' ? 36 : 40;
+    
     node
       .filter(d => d.data.type === 'project')
       .append('rect')
-      .attr('x', -80)
-      .attr('y', -20)
-      .attr('width', 160)
-      .attr('height', 40)
+      .attr('x', -rectWidth / 2)
+      .attr('y', -rectHeight / 2)
+      .attr('width', rectWidth)
+      .attr('height', rectHeight)
       .attr('rx', 8)
       .attr('fill', d => {
         const project = d.data.data as Project;
         return statusColors[project.status as keyof typeof statusColors] || '#6b7280';
       })
       .attr('stroke', '#06b6d4')
-      .attr('stroke-width', 2)
+      .attr('stroke-width', deviceType === 'tablet' ? 2 : 2)
       .attr('opacity', 0.8)
       .style('cursor', 'pointer')
       .on('mouseenter', function(event, d) {
-        select(this).attr('opacity', 1).attr('stroke-width', 3);
-        const project = d.data.data as Project;
-        setTooltip({
-          visible: true,
-          x: event.pageX,
-          y: event.pageY,
-          content: project,
-          type: 'project',
-        });
+        if (deviceType === 'desktop') {
+          select(this).attr('opacity', 1).attr('stroke-width', 3);
+          const project = d.data.data as Project;
+          setTooltip({
+            visible: true,
+            x: event.pageX,
+            y: event.pageY,
+            content: project,
+            type: 'project',
+          });
+        }
       })
       .on('mouseleave', function() {
-        select(this).attr('opacity', 0.8).attr('stroke-width', 2);
-        setTooltip(prev => ({ ...prev, visible: false }));
+        if (deviceType === 'desktop') {
+          select(this).attr('opacity', 0.8).attr('stroke-width', 2);
+          setTooltip(prev => ({ ...prev, visible: false }));
+        }
       })
-      .on('click', (_event, d) => {
+      .on('click', (event, d) => {
         const project = d.data.data as Project;
         setSelectedProject(project);
+        // On tablet, show tooltip on tap
+        if (deviceType === 'tablet') {
+          setTooltip({
+            visible: true,
+            x: event.pageX,
+            y: event.pageY,
+            content: project,
+            type: 'project',
+          });
+          // Hide tooltip after 3 seconds
+          setTimeout(() => {
+            setTooltip(prev => ({ ...prev, visible: false }));
+          }, 3000);
+        }
       });
 
     // Add circles for version nodes
-    node
-      .filter(d => d.data.type === 'version')
+    // Add transparent larger circle for touch target on tablet
+    const versionNodes = node.filter(d => d.data.type === 'version');
+    
+    // Add invisible larger circle for better touch targets on tablet
+    if (deviceType === 'tablet') {
+      versionNodes
+        .append('circle')
+        .attr('r', touchTargetSize / 2)
+        .attr('fill', 'transparent')
+        .style('cursor', 'pointer')
+        .on('click', (event, d) => {
+          const versionData = d.data.data as { version: string; releaseStatus: 'release' | 'dev'; items?: string[] };
+          const parentProject = d.parent?.data.data as Project;
+          setSelectedVersion({
+            projectTitle: parentProject.title,
+            version: versionData.version,
+            releaseStatus: versionData.releaseStatus,
+            items: versionData.items,
+          });
+          // Show tooltip on tap for tablet
+          setTooltip({
+            visible: true,
+            x: event.pageX,
+            y: event.pageY,
+            content: versionData,
+            type: 'version',
+          });
+          setTimeout(() => {
+            setTooltip(prev => ({ ...prev, visible: false }));
+          }, 3000);
+        });
+    }
+    
+    versionNodes
       .append('circle')
-      .attr('r', 8)
+      .attr('r', nodeRadius - (deviceType === 'tablet' ? 3 : 4))
       .attr('fill', d => {
         const versionData = d.data.data as { version: string; releaseStatus: 'release' | 'dev'; items?: string[] };
         return versionData.releaseStatus === 'release' ? '#10b981' : '#f59e0b';
@@ -247,50 +317,57 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
         const versionData = d.data.data as { version: string; releaseStatus: 'release' | 'dev'; items?: string[] };
         return versionData.releaseStatus === 'dev' ? '#f59e0b' : '#0a0a0a';
       })
-      .attr('stroke-width', 2)
+      .attr('stroke-width', deviceType === 'tablet' ? 2 : 2)
       .style('cursor', 'pointer')
+      .style('pointer-events', deviceType === 'tablet' ? 'none' : 'all')
       .on('mouseenter', function(event, d) {
-        select(this).attr('r', 12);
-        const versionData = d.data.data as { version: string; releaseStatus: 'release' | 'dev'; items?: string[] };
-        setTooltip({
-          visible: true,
-          x: event.pageX,
-          y: event.pageY,
-          content: versionData,
-          type: 'version',
-        });
+        if (deviceType === 'desktop') {
+          select(this).attr('r', nodeRadius);
+          const versionData = d.data.data as { version: string; releaseStatus: 'release' | 'dev'; items?: string[] };
+          setTooltip({
+            visible: true,
+            x: event.pageX,
+            y: event.pageY,
+            content: versionData,
+            type: 'version',
+          });
+        }
       })
       .on('mouseleave', function() {
-        select(this).attr('r', 8);
-        setTooltip(prev => ({ ...prev, visible: false }));
+        if (deviceType === 'desktop') {
+          select(this).attr('r', nodeRadius - 4);
+          setTooltip(prev => ({ ...prev, visible: false }));
+        }
       })
       .on('click', (_event, d) => {
-        const versionData = d.data.data as { version: string; releaseStatus: 'release' | 'dev'; items?: string[] };
-        const parentProject = d.parent?.data.data as Project;
-        setSelectedVersion({
-          projectTitle: parentProject.title,
-          version: versionData.version,
-          releaseStatus: versionData.releaseStatus,
-          items: versionData.items,
-        });
+        if (deviceType === 'desktop') {
+          const versionData = d.data.data as { version: string; releaseStatus: 'release' | 'dev'; items?: string[] };
+          const parentProject = d.parent?.data.data as Project;
+          setSelectedVersion({
+            projectTitle: parentProject.title,
+            version: versionData.version,
+            releaseStatus: versionData.releaseStatus,
+            items: versionData.items,
+          });
+        }
       });
 
     // Add root circle
     node
       .filter(d => d.data.type === 'root')
       .append('circle')
-      .attr('r', 12)
+      .attr('r', nodeRadius)
       .attr('fill', '#06b6d4')
       .attr('stroke', '#0a0a0a')
       .attr('stroke-width', 3);
 
-    // Add text labels
+    // Add text labels with adaptive sizing - smaller on tablet
     node
       .append('text')
       .attr('dy', d => {
-        if (d.data.type === 'project') return 5;
-        if (d.data.type === 'root') return -20;
-        return 25;
+        if (d.data.type === 'project') return 4;
+        if (d.data.type === 'root') return deviceType === 'tablet' ? -18 : -20;
+        return deviceType === 'tablet' ? 22 : 25;
       })
       .attr('text-anchor', 'middle')
       .text(d => d.data.name)
@@ -301,16 +378,17 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       })
       .attr('font-weight', d => (d.data.type === 'root' ? 'bold' : 'normal'))
       .attr('font-size', d => {
-        if (d.data.type === 'root') return '18px';
-        if (d.data.type === 'project') return '14px';
-        return '12px';
+        const sizeMultiplier = deviceType === 'tablet' ? 0.85 : 1;
+        if (d.data.type === 'root') return `${16 * sizeMultiplier}px`;
+        if (d.data.type === 'project') return `${12 * sizeMultiplier}px`;
+        return `${11 * sizeMultiplier}px`;
       })
       .style('pointer-events', 'none')
       .style('user-select', 'none');
 
-    // Add zoom behavior
+    // Add zoom behavior with device-specific constraints
     const zoomBehavior = zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 3])
+      .scaleExtent(deviceType === 'tablet' ? [0.5, 2] : [0.1, 3])
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
       });
@@ -324,7 +402,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
 
     svg.call(zoomBehavior.transform as any, initialTransform);
 
-  }, [projects]);
+  }, [projects, deviceType]);
 
   return (
     <div className="relative">

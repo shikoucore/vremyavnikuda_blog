@@ -22,7 +22,8 @@ const currentPath = Astro.url.pathname;
         vremyavnikuda
       </a>
       
-      <div class="flex items-center gap-6">
+      <!-- Desktop Navigation -->
+      <div class="hidden md:flex items-center gap-6">
         <LanguagePicker />
         <ul class="flex gap-6">
         {navLinks.map(({ href, label }) => (
@@ -40,6 +41,62 @@ const currentPath = Astro.url.pathname;
         ))}
         </ul>
       </div>
+
+      <!-- Mobile Navigation -->
+      <div class="md:hidden flex items-center gap-4">
+        <LanguagePicker />
+        <button
+          id="mobile-menu-button"
+          type="button"
+          class="inline-flex items-center justify-center p-2 rounded-md hover:bg-[var(--color-bg-secondary)] transition-colors"
+          aria-expanded="false"
+          aria-label="Toggle navigation menu"
+        >
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Menu (hidden by default) -->
+    <div id="mobile-menu" class="hidden md:hidden mt-4 pb-2">
+      <ul class="space-y-2">
+        {navLinks.map(({ href, label }) => (
+          <li>
+            <a
+              href={href}
+              class:list={[
+                'block px-3 py-2 rounded-md hover:bg-[var(--color-bg-secondary)] transition-colors',
+                currentPath === href && 'bg-[var(--color-bg-secondary)] text-primary-400 font-medium'
+              ]}
+            >
+              {label}
+            </a>
+          </li>
+        ))}
+      </ul>
     </div>
   </nav>
 </header>
+
+<script>
+  const mobileMenuButton = document.getElementById('mobile-menu-button');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  if (mobileMenuButton && mobileMenu) {
+    mobileMenuButton.addEventListener('click', () => {
+      const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+      mobileMenuButton.setAttribute('aria-expanded', String(!isExpanded));
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      if (!mobileMenuButton.contains(target) && !mobileMenu.contains(target)) {
+        mobileMenuButton.setAttribute('aria-expanded', 'false');
+        mobileMenu.classList.add('hidden');
+      }
+    });
+  }
+</script>
