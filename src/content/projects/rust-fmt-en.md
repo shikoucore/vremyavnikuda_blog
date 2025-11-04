@@ -6,6 +6,11 @@ link: "https://marketplace.visualstudio.com/items?itemName=vremyavnikuda.rust-fm
 tags: ["rust", "typescript", "vscode", "formatter", "developer-tools"]
 featured: true
 lang: en
+status: "active"
+version: "0.1.0"
+roadmap:
+  - version: "0.1.0"
+    releaseStatus: "release"
 ---
 
 VS Code extension for formatting Rust code via rustfmt. Simple and fast extension: runs `rustfmt --emit stdout`, automatically detects your `rustfmt.toml` (if present), and works on Linux/Windows/macOS. Supports format-on-save, manual execution from the command palette, and custom parameters such as binary path and additional arguments.

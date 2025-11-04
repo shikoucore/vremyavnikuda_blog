@@ -1,75 +1,34 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import ProjectsRoadmapVisualization from '@components/ProjectsRoadmapVisualization';
 
 const lang = 'en';
 
-const projects = (await getCollection('projects'))
+const projectsCollection = (await getCollection('projects'))
   .filter(project => project.data.lang === lang)
   .sort((a, b) => (b.data.featured ? 1 : 0) - (a.data.featured ? 1 : 0));
+
+// Transform projects for visualization
+const projects = projectsCollection.map(project => ({
+  id: project.id,
+  title: project.data.title,
+  description: project.data.description,
+  version: project.data.version,
+  status: project.data.status,
+  tags: project.data.tags,
+  github: project.data.github,
+  link: project.data.link,
+  roadmap: project.data.roadmap,
+}));
 ---
 
 <BaseLayout title="Projects - vremyavnikuda" description="Personal projects and open source contributions">
-  <div class="max-w-4xl mx-auto px-4 py-16">
-    <header class="mb-12">
-      <h1 class="text-4xl font-bold mb-4">Projects</h1>
-      <p class="text-xl text-[var(--color-text-secondary)]">
-        Things I've built and contributed to
-      </p>
-    </header>
-
+  <div class="max-w-7xl mx-auto px-4 py-8">
     {projects.length === 0 ? (
       <p class="text-[var(--color-text-secondary)]">Projects coming soon!</p>
     ) : (
-      <div class="grid md:grid-cols-2 gap-6">
-        {projects.map(async (project) => {
-          const { Content } = await project.render();
-          return (
-            <article class="border border-[var(--color-border)] rounded-lg p-6 hover:shadow-lg transition-shadow">
-              <h2 class="text-2xl font-semibold mb-3">
-                {project.data.title}
-              </h2>
-              <p class="text-[var(--color-text-secondary)] mb-4">
-                {project.data.description}
-              </p>
-              <div class="prose prose-sm mb-4">
-                <Content />
-              </div>
-              {project.data.tags.length > 0 && (
-                <div class="flex flex-wrap gap-2 mb-4">
-                  {project.data.tags.map((tag) => (
-                    <span class="text-xs px-2 py-1 bg-[var(--color-bg-secondary)] rounded">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-              <div class="flex gap-4">
-                {project.data.link && (
-                  <a 
-                    href={project.data.link} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    class="text-primary-400 hover:underline text-sm"
-                  >
-                    Visit →
-                  </a>
-                )}
-                {project.data.github && (
-                  <a 
-                    href={project.data.github} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    class="text-primary-400 hover:underline text-sm"
-                  >
-                    GitHub →
-                  </a>
-                )}
-              </div>
-            </article>
-          );
-        })}
-      </div>
+      <ProjectsRoadmapVisualization projects={projects} client:load />
     )}
   </div>
 </BaseLayout>

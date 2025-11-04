@@ -1,0 +1,110 @@
+---
+import ProjectRoadmapTree from './ProjectRoadmapTree';
+
+interface RoadmapItem {
+  version: string;
+  status: 'completed' | 'in-progress' | 'planned';
+  items: string[];
+}
+
+interface Props {
+  roadmap: RoadmapItem[];
+  currentVersion?: string;
+  projectTitle: string;
+  useTree?: boolean; // Toggle between tree and timeline view
+}
+
+const { roadmap, currentVersion, projectTitle, useTree = true } = Astro.props;
+
+const statusIcons = {
+  'completed': '✓',
+  'in-progress': '◉',
+  'planned': '○',
+};
+
+const statusColors = {
+  'completed': 'text-green-400',
+  'in-progress': 'text-cyan-400',
+  'planned': 'text-gray-500',
+};
+---
+
+{useTree ? (
+  <ProjectRoadmapTree 
+    roadmap={roadmap} 
+    currentVersion={currentVersion}
+    projectTitle={projectTitle}
+    client:load
+  />
+) : (
+<div class="roadmap-container mt-8">
+  <h3 class="text-xl font-semibold mb-6 flex items-center gap-2">
+    <span class="text-cyan-400">→</span>
+    Roadmap
+    {currentVersion && (
+      <span class="text-sm text-[var(--color-text-secondary)]">
+        (current: v{currentVersion})
+      </span>
+    )}
+  </h3>
+
+  <div class="relative pl-8 border-l-2 border-[var(--color-border)]">
+    {roadmap.map((milestone, index) => (
+      <div class={`roadmap-milestone mb-8 relative ${index === roadmap.length - 1 ? 'pb-0' : ''}`}>
+        {/* Timeline dot */}
+        <div class={`absolute -left-[33px] w-4 h-4 rounded-full border-2 border-[var(--color-border)] ${
+          milestone.status === 'completed' ? 'bg-green-400' :
+          milestone.status === 'in-progress' ? 'bg-cyan-400 animate-pulse' :
+          'bg-[var(--color-bg)]'
+        }`}></div>
+
+        {/* Version header */}
+        <div class="flex items-center gap-3 mb-3">
+          <span class={`text-lg font-semibold ${statusColors[milestone.status]}`}>
+            {statusIcons[milestone.status]} v{milestone.version}
+          </span>
+          <span class={`text-xs px-2 py-1 rounded ${
+            milestone.status === 'completed' ? 'bg-green-900/30 text-green-400' :
+            milestone.status === 'in-progress' ? 'bg-cyan-900/30 text-cyan-400' :
+            'bg-gray-800 text-gray-500'
+          }`}>
+            {milestone.status === 'completed' ? 'Released' :
+             milestone.status === 'in-progress' ? 'In Progress' :
+             'Planned'}
+          </span>
+        </div>
+
+        {/* Features list */}
+        <ul class="space-y-2 text-sm">
+          {milestone.items.map((item) => (
+            <li class="flex items-start gap-2 text-[var(--color-text-secondary)]">
+              <span class="text-cyan-400 mt-0.5">·</span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </div>
+</div>
+)}
+
+<style>
+  .roadmap-milestone:hover {
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+</style>

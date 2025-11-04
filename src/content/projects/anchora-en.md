@@ -6,6 +6,11 @@ link: "https://marketplace.visualstudio.com/items?itemName=vremyavnikuda.anchora
 tags: ["rust", "typescript", "vscode", "task-manager", "developer-tools"]
 featured: true
 lang: en
+status: "active"
+version: "0.1.1"
+roadmap:
+  - version: "0.1.1"
+    releaseStatus: "release"
 ---
 
 A VS Code extension that turns code comments into an in-editor task manager.
