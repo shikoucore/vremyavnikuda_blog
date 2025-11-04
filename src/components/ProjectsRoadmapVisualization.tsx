@@ -42,6 +42,12 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
     type: 'project' | 'version';
   }>({ visible: false, x: 0, y: 0, content: null, type: 'project' });
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedVersion, setSelectedVersion] = useState<{
+    projectTitle: string;
+    version: string;
+    releaseStatus: 'release' | 'dev';
+    items?: string[];
+  } | null>(null);
 
   useEffect(() => {
     if (!svgRef.current || !projects || projects.length === 0) return;
@@ -230,6 +236,16 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       .on('mouseleave', function() {
         select(this).attr('r', 8);
         setTooltip(prev => ({ ...prev, visible: false }));
+      })
+      .on('click', (_event, d) => {
+        const versionData = d.data.data as { version: string; releaseStatus: 'release' | 'dev'; items?: string[] };
+        const parentProject = d.parent?.data.data as Project;
+        setSelectedVersion({
+          projectTitle: parentProject.title,
+          version: versionData.version,
+          releaseStatus: versionData.releaseStatus,
+          items: versionData.items,
+        });
       });
 
     // Add root circle
@@ -342,6 +358,58 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Modal for version details */}
+      {selectedVersion && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
+          onClick={() => setSelectedVersion(null)}
+        >
+          <div
+            className="bg-[var(--color-bg)] border border-cyan-400 rounded-lg p-6 max-w-xl max-h-[80vh] overflow-y-auto m-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-cyan-400">{selectedVersion.projectTitle}</h2>
+                <div className="flex items-center gap-2 mt-2">
+                  <h3 className="text-xl font-bold">v{selectedVersion.version}</h3>
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    selectedVersion.releaseStatus === 'release' 
+                      ? 'bg-green-900/30 text-green-400' 
+                      : 'bg-orange-900/30 text-orange-400'
+                  }`}>
+                    {selectedVersion.releaseStatus === 'release' ? 'Release' : 'Dev'}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedVersion(null)}
+                className="text-[var(--color-text-secondary)] hover:text-cyan-400 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            {selectedVersion.items && selectedVersion.items.length > 0 ? (
+              <div>
+                <h4 className="text-lg font-bold text-cyan-400 mb-3">Changes</h4>
+                <ul className="space-y-2">
+                  {selectedVersion.items.map((item, idx) => (
+                    <li key={idx} className="text-sm text-[var(--color-text)]">
+                      • {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="text-sm text-[var(--color-text-secondary)] italic">
+                No detailed changelog available for this version.
+              </p>
+            )}
+          </div>
         </div>
       )}
 

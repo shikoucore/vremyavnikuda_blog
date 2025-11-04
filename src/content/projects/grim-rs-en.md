@@ -17,6 +17,13 @@ roadmap:
     releaseStatus: "release"
   - version: "0.1.3"
     releaseStatus: "release"
+    items:
+      - "Struct encapsulation (Box, CaptureResult, Output, CaptureParameters, MultiOutputCaptureResult)"
+      - "Added Builder pattern for CaptureParameters"
+      - "Fixed critical bug in capture_outputs()"
+      - "Improved error handling (replaced unwrap() with proper error propagation)"
+      - "Optimized memory usage (removed unnecessary cloning)"
+      - "Added comprehensive test coverage"
   - version: "0.1.4"
     releaseStatus: "dev"
 ---

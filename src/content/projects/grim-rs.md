@@ -17,6 +17,13 @@ roadmap:
     releaseStatus: "release"
   - version: "0.1.3"
     releaseStatus: "release"
+    items:
+      - "構造体のカプセル化（Box、CaptureResult、Output、CaptureParameters、MultiOutputCaptureResult）"
+      - "Builderパターンの追加（CaptureParameters）"
+      - "capture_outputs()の重大なバグ修正"
+      - "エラーハンドリングの改善（unwrap()を適切なエラー伝播に置き換え）"
+      - "メモリ使用量の最適化（不要なクローンを削除）"
+      - "包括的なテストカバレッジの追加"
   - version: "0.1.4"
     releaseStatus: "dev"
 ---
