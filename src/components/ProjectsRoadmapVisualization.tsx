@@ -75,10 +75,10 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       const versionNodes: TreeNode[] = project.roadmap?.map(milestone => ({
         name: `v${milestone.version}`,
         type: 'version' as const,
-        data: { 
-          version: milestone.version, 
+        data: {
+          version: milestone.version,
           releaseStatus: milestone.releaseStatus,
-          items: milestone.items 
+          items: milestone.items
         },
       })) || [];
 
@@ -95,7 +95,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
     // Second pass: build hierarchy based on parentProject
     projects.forEach(project => {
       const projectNode = projectsMap.get(project.title)!;
-      
+
       if (project.parentProject) {
         // This project is a child of another project
         const parentNode = projectsMap.get(project.parentProject);
@@ -120,11 +120,11 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
 
     // Dimensions adapted for device type
     const width = containerRef.current?.clientWidth || 1200;
-    const height = deviceType === 'tablet' ? 600 : 800;
-    const margin = deviceType === 'tablet' 
+    const height = deviceType === 'tablet' ? 800 : 1200;
+    const margin = deviceType === 'tablet'
       ? { top: 20, right: 40, bottom: 20, left: 60 }
       : { top: 20, right: 120, bottom: 20, left: 120 };
-    
+
     // Node radius based on device type - compact for tablet
     const nodeRadius = deviceType === 'tablet' ? 10 : 12;
     const touchTargetSize = 44; // iOS/Android recommended minimum touch target
@@ -143,9 +143,26 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
     const treeLayout = tree<TreeNode>()
       .size([height - margin.top - margin.bottom, width - margin.left - margin.right])
       .separation((a, b) => {
-        // Compact spacing on tablet, but still touch-friendly
-        const baseSeparation = deviceType === 'tablet' ? 2 : 2;
-        const crossSeparation = deviceType === 'tablet' ? 2.5 : 3;
+        // Smart spacing: more space for categories at root level, less for versions
+        const aIsCategory = a.data.type === 'project' && a.depth === 1;
+        const bIsCategory = b.data.type === 'project' && b.depth === 1;
+        const bothAreCategories = aIsCategory && bIsCategory;
+
+        // If both are categories at root level (like "projects" and "Shikou Core"), add more space
+        if (bothAreCategories && a.parent === b.parent) {
+          return deviceType === 'tablet' ? 8 : 10;
+        }
+
+        // Version nodes need less space
+        const aIsVersion = a.data.type === 'version';
+        const bIsVersion = b.data.type === 'version';
+        if (aIsVersion || bIsVersion) {
+          return deviceType === 'tablet' ? 1.5 : 2;
+        }
+
+        // Default spacing
+        const baseSeparation = deviceType === 'tablet' ? 2 : 2.5;
+        const crossSeparation = deviceType === 'tablet' ? 3 : 4;
         return a.parent === b.parent ? baseSeparation : crossSeparation;
       });
 
@@ -217,7 +234,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
     // Compact size for tablet with touch overlay
     const rectWidth = deviceType === 'tablet' ? 120 : 160;
     const rectHeight = deviceType === 'tablet' ? 36 : 40;
-    
+
     node
       .filter(d => d.data.type === 'project')
       .append('rect')
@@ -234,7 +251,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       .attr('stroke-width', deviceType === 'tablet' ? 2 : 2)
       .attr('opacity', 0.8)
       .style('cursor', 'pointer')
-      .on('mouseenter', function(event, d) {
+      .on('mouseenter', function (event, d) {
         if (deviceType === 'desktop') {
           select(this).attr('opacity', 1).attr('stroke-width', 3);
           const project = d.data.data as Project;
@@ -247,7 +264,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
           });
         }
       })
-      .on('mouseleave', function() {
+      .on('mouseleave', function () {
         if (deviceType === 'desktop') {
           select(this).attr('opacity', 0.8).attr('stroke-width', 2);
           setTooltip(prev => ({ ...prev, visible: false }));
@@ -275,7 +292,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
     // Add circles for version nodes
     // Add transparent larger circle for touch target on tablet
     const versionNodes = node.filter(d => d.data.type === 'version');
-    
+
     // Add invisible larger circle for better touch targets on tablet
     if (deviceType === 'tablet') {
       versionNodes
@@ -305,7 +322,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
           }, 3000);
         });
     }
-    
+
     versionNodes
       .append('circle')
       .attr('r', nodeRadius - (deviceType === 'tablet' ? 3 : 4))
@@ -320,7 +337,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       .attr('stroke-width', deviceType === 'tablet' ? 2 : 2)
       .style('cursor', 'pointer')
       .style('pointer-events', deviceType === 'tablet' ? 'none' : 'all')
-      .on('mouseenter', function(event, d) {
+      .on('mouseenter', function (event, d) {
         if (deviceType === 'desktop') {
           select(this).attr('r', nodeRadius);
           const versionData = d.data.data as { version: string; releaseStatus: 'release' | 'dev'; items?: string[] };
@@ -333,7 +350,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
           });
         }
       })
-      .on('mouseleave', function() {
+      .on('mouseleave', function () {
         if (deviceType === 'desktop') {
           select(this).attr('r', nodeRadius - 4);
           setTooltip(prev => ({ ...prev, visible: false }));
@@ -444,11 +461,10 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <h4 className="font-bold text-cyan-400">v{tooltip.content.version}</h4>
-                <span className={`text-xs px-2 py-1 rounded ${
-                  tooltip.content.releaseStatus === 'release' 
-                    ? 'bg-green-900/30 text-green-400' 
-                    : 'bg-orange-900/30 text-orange-400'
-                }`}>
+                <span className={`text-xs px-2 py-1 rounded ${tooltip.content.releaseStatus === 'release'
+                  ? 'bg-green-900/30 text-green-400'
+                  : 'bg-orange-900/30 text-orange-400'
+                  }`}>
                   {tooltip.content.releaseStatus === 'release' ? 'Release' : 'Dev'}
                 </span>
               </div>
@@ -481,11 +497,10 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
                 <h2 className="text-2xl font-bold text-cyan-400">{selectedVersion.projectTitle}</h2>
                 <div className="flex items-center gap-2 mt-2">
                   <h3 className="text-xl font-bold">v{selectedVersion.version}</h3>
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    selectedVersion.releaseStatus === 'release' 
-                      ? 'bg-green-900/30 text-green-400' 
-                      : 'bg-orange-900/30 text-orange-400'
-                  }`}>
+                  <span className={`text-xs px-2 py-1 rounded ${selectedVersion.releaseStatus === 'release'
+                    ? 'bg-green-900/30 text-green-400'
+                    : 'bg-orange-900/30 text-orange-400'
+                    }`}>
                     {selectedVersion.releaseStatus === 'release' ? 'Release' : 'Dev'}
                   </span>
                 </div>
@@ -583,11 +598,10 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
                     <div key={milestone.version} className="border border-[var(--color-border)] rounded-lg p-4">
                       <h4 className="font-bold text-lg mb-2 flex items-center gap-2">
                         v{milestone.version}
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          milestone.releaseStatus === 'release' 
-                            ? 'bg-green-900/30 text-green-400' 
-                            : 'bg-orange-900/30 text-orange-400'
-                        }`}>
+                        <span className={`text-xs px-2 py-1 rounded ${milestone.releaseStatus === 'release'
+                          ? 'bg-green-900/30 text-green-400'
+                          : 'bg-orange-900/30 text-orange-400'
+                          }`}>
                           {milestone.releaseStatus === 'release' ? 'Release' : 'Dev'}
                         </span>
                       </h4>

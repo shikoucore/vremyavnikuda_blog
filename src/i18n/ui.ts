@@ -73,6 +73,10 @@ export const ui = {
     'subscribe.placeholder': 'メールアドレスを入力',
     'subscribe.button': '購読する',
     'subscribe.privacy': 'スパムは送信しません。いつでも購読を解除できます。',
+    'pagination.previous': '← 前へ',
+    'pagination.next': '次へ →',
+    'pagination.page': 'ページ',
+    'pagination.of': '/',
   },
   en: {
     'nav.home': 'Home',
@@ -141,6 +145,10 @@ export const ui = {
     'subscribe.placeholder': 'Enter your email',
     'subscribe.button': 'Subscribe',
     'subscribe.privacy': 'No spam. Unsubscribe anytime.',
+    'pagination.previous': '← Previous',
+    'pagination.next': 'Next →',
+    'pagination.page': 'Page',
+    'pagination.of': 'of',
   },
 } as const;
 
