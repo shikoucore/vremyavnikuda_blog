@@ -1,8 +1,58 @@
 ---
-import { getLangFromUrl } from '../../i18n/utils';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { getLangFromUrl, useTranslations, getLocalizedPath } from '../../i18n/utils';
 
 const lang = getLangFromUrl(Astro.url);
-const redirectUrl = lang === 'en' ? '/en/blog/1' : '/blog/1';
+const t = useTranslations(lang);
 
-return Astro.redirect(redirectUrl);
+const allPosts = (await getCollection('blog'))
+  .filter(post => !post.data.draft && post.data.lang === lang)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 ---
+
+<BaseLayout title={`${t('blog.title')} - vremyavnikuda`} description={t('blog.description')}>
+  <div class="max-w-4xl mx-auto px-4 py-16">
+    <header class="mb-12">
+      <h1 class="text-4xl font-bold mb-4">{t('blog.title')}</h1>
+      <p class="text-xl text-[var(--color-text-secondary)]">
+        {t('blog.description')}
+      </p>
+    </header>
+
+    {allPosts.length === 0 ? (
+      <p class="text-[var(--color-text-secondary)]">{t('blog.noPosts')}</p>
+    ) : (
+      <div class="space-y-12">
+        {allPosts.map((post) => (
+          <article class="group">
+            <a href={getLocalizedPath(`/blog/${post.slug}`, lang)} class="block">
+              <time class="text-sm text-[var(--color-text-secondary)]">
+                {post.data.pubDate.toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </time>
+              <h2 class="text-3xl font-semibold mt-2 mb-3 group-hover:text-primary-400 transition-colors">
+                {post.data.title}
+              </h2>
+              <p class="text-[var(--color-text-secondary)] mb-4">
+                {post.data.description}
+              </p>
+              {post.data.tags.length > 0 && (
+                <div class="flex gap-2">
+                  {post.data.tags.map((tag) => (
+                    <span class="text-xs px-2 py-1 bg-[var(--color-bg-secondary)] rounded">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </a>
+          </article>
+        ))}
+      </div>
+    )}
+  </div>
+</BaseLayout>
