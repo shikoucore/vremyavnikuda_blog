@@ -5,4 +5,5 @@ projectType: "category"
 category: "projects"
 lang: ja
 status: "active"
+linkedProjects: ["windows", "sysinfo_utils"]
 ---

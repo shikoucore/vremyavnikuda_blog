@@ -37,8 +37,6 @@ export default function MobileProjectList({ projects }: Props) {
     items?: string[];
   } | null>(null);
 
-  // Build hierarchy - memoized to avoid recalculation
-  // ВАЖНО: useMemo должен быть до любых условных return!
   const hierarchy = useMemo(() => {
     if (!projects || projects.length === 0) {
       return [];
@@ -189,7 +187,6 @@ export default function MobileProjectList({ projects }: Props) {
     );
   };
 
-  // Render empty state if no projects
   if (!projects || projects.length === 0 || hierarchy.length === 0) {
     return (
       <div className="p-4 text-center text-[var(--color-text-secondary)]">

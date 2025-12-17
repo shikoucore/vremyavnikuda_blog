@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { hierarchy, tree } from 'd3-hierarchy';
 import { select } from 'd3-selection';
-import { linkHorizontal } from 'd3-shape';
+
 import { zoom, zoomIdentity } from 'd3-zoom';
 import { useDeviceType } from '../hooks/useMediaQuery';
 import MobileProjectList from './MobileProjectList';
@@ -18,6 +18,7 @@ interface Project {
   projectType?: 'category' | 'project' | 'contribution';
   category?: 'projects' | 'contributing';
   parentProject?: string;
+  linkedProjects?: string[];
   roadmap?: Array<{
     version: string;
     releaseStatus: 'release' | 'dev';
@@ -55,7 +56,6 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
     items?: string[];
   } | null>(null);
 
-  // Render mobile view with accordion list
   if (deviceType === 'mobile') {
     return <MobileProjectList projects={projects} />;
   }
@@ -63,14 +63,9 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
   useEffect(() => {
     if (!svgRef.current || !projects || projects.length === 0) return;
 
-    // Clear previous content
     select(svgRef.current).selectAll('*').remove();
-
-    // Build tree data with parent-child relationships
     const projectsMap = new Map<string, TreeNode>();
     const rootProjects: TreeNode[] = [];
-
-    // First pass: create all project nodes with their versions
     projects.forEach(project => {
       const versionNodes: TreeNode[] = project.roadmap?.map(milestone => ({
         name: `v${milestone.version}`,
@@ -86,28 +81,23 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
         name: project.title,
         type: 'project',
         data: project,
-        children: [...versionNodes], // Start with versions
+        children: [...versionNodes],
       };
 
       projectsMap.set(project.title, projectNode);
     });
 
-    // Second pass: build hierarchy based on parentProject
     projects.forEach(project => {
       const projectNode = projectsMap.get(project.title)!;
 
       if (project.parentProject) {
-        // This project is a child of another project
         const parentNode = projectsMap.get(project.parentProject);
         if (parentNode) {
-          // Add this project as child to parent (after versions)
           parentNode.children!.push(projectNode);
         } else {
-          // Parent not found, add to root
           rootProjects.push(projectNode);
         }
       } else {
-        // No parent, add to root
         rootProjects.push(projectNode);
       }
     });
@@ -118,59 +108,103 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       children: rootProjects,
     };
 
-    // Dimensions adapted for device type
-    const width = containerRef.current?.clientWidth || 1200;
-    const height = deviceType === 'tablet' ? 800 : 1200;
+    const width = containerRef.current?.clientWidth || window.innerWidth - 20;
+    const height = deviceType === 'tablet' ? 700 : Math.max(800, window.innerHeight - 100);
     const margin = deviceType === 'tablet'
-      ? { top: 20, right: 40, bottom: 20, left: 60 }
-      : { top: 20, right: 120, bottom: 20, left: 120 };
+      ? { top: 10, right: 20, bottom: 10, left: 20 }
+      : { top: 20, right: 40, bottom: 20, left: 40 };
 
-    // Node radius based on device type - compact for tablet
     const nodeRadius = deviceType === 'tablet' ? 10 : 12;
-    const touchTargetSize = 44; // iOS/Android recommended minimum touch target
+    const touchTargetSize = 44;
 
-    // Create SVG
     const svg = select(svgRef.current)
       .attr('width', width)
       .attr('height', height)
       .style('font-family', '"Cascadia Code", monospace')
       .style('font-size', '13px');
 
-    // Create container group for zoom
     const g = svg.append('g');
-
-    // Create tree layout (horizontal) with adaptive spacing
+    const maxTreeWidth = deviceType === 'tablet' ? 900 : 1100;
+    const maxTreeHeight = deviceType === 'tablet' ? 600 : 800;
+    const treeWidth = Math.min(width - margin.left - margin.right, maxTreeWidth);
+    const treeHeight = Math.min(height - margin.top - margin.bottom, maxTreeHeight);
+    
     const treeLayout = tree<TreeNode>()
-      .size([height - margin.top - margin.bottom, width - margin.left - margin.right])
+      .size([treeHeight, treeWidth])
       .separation((a, b) => {
-        // Smart spacing: more space for categories at root level, less for versions
         const aIsCategory = a.data.type === 'project' && a.depth === 1;
         const bIsCategory = b.data.type === 'project' && b.depth === 1;
         const bothAreCategories = aIsCategory && bIsCategory;
-
-        // If both are categories at root level (like "projects" and "Shikou Core"), add more space
         if (bothAreCategories && a.parent === b.parent) {
           return deviceType === 'tablet' ? 8 : 10;
         }
 
-        // Version nodes need less space
         const aIsVersion = a.data.type === 'version';
         const bIsVersion = b.data.type === 'version';
         if (aIsVersion || bIsVersion) {
           return deviceType === 'tablet' ? 1.5 : 2;
         }
 
-        // Default spacing
         const baseSeparation = deviceType === 'tablet' ? 2 : 2.5;
         const crossSeparation = deviceType === 'tablet' ? 3 : 4;
         return a.parent === b.parent ? baseSeparation : crossSeparation;
       });
 
-    // Create hierarchy
     const root = hierarchy(treeData);
     const treeData_ = treeLayout(root);
+    const rootNode = treeData_;
+    const rootY = rootNode.y;
+    const rootX = rootNode.x;
+    
+    if (rootNode.children && rootNode.children.length > 0) {
+      const children = rootNode.children;
+      const leftBranches: typeof children = [];
+      const rightBranches: typeof children = [];
+      children.forEach((child) => {
+        const childName = child.data.name;
+        if (childName === 'Shikou Core' || childName === 'projects') {
+          leftBranches.push(child);
+        } else {
+          rightBranches.push(child);
+        }
+      });
+      if (leftBranches.length > 0) {
+        let leftMinX = Infinity, leftMaxX = -Infinity;
+        leftBranches.forEach(branch => {
+          branch.descendants().forEach(node => {
+            if (node.x < leftMinX) leftMinX = node.x;
+            if (node.x > leftMaxX) leftMaxX = node.x;
+          });
+        });
+        const leftCenterX = (leftMinX + leftMaxX) / 2;
+        const leftOffsetX = rootX - leftCenterX;
+        leftBranches.forEach(branch => {
+          branch.descendants().forEach(node => {
+            node.x += leftOffsetX;
+            node.y = rootY - (node.y - rootY);
+          });
+        });
+      }
+      
+      if (rightBranches.length > 0) {
+        let rightMinX = Infinity, rightMaxX = -Infinity;
+        rightBranches.forEach(branch => {
+          branch.descendants().forEach(node => {
+            if (node.x < rightMinX) rightMinX = node.x;
+            if (node.x > rightMaxX) rightMaxX = node.x;
+          });
+        });
+        
+        const rightCenterX = (rightMinX + rightMaxX) / 2;
+        const rightOffsetX = rootX - rightCenterX;
+        rightBranches.forEach(branch => {
+          branch.descendants().forEach(node => {
+            node.x += rightOffsetX;
+          });
+        });
+      }
+    }
 
-    // Calculate bounds for centering
     let minX = Infinity;
     let maxX = -Infinity;
     let minY = Infinity;
@@ -183,21 +217,18 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       if (d.y > maxY) maxY = d.y;
     });
 
-    // Calculate scale to fit everything - more aggressive scaling on tablet
     const padding = deviceType === 'tablet' ? 60 : 100;
     const dataWidth = maxY - minY + padding * 2;
     const dataHeight = maxX - minX + padding * 2;
     const scale = Math.min(
       (width - margin.left - margin.right) / dataWidth,
       (height - margin.top - margin.bottom) / dataHeight,
-      deviceType === 'tablet' ? 0.8 : 1 // Scale down on tablet to fit more
+      deviceType === 'tablet' ? 0.8 : 1
     );
 
-    // Calculate center offset
     const centerX = (width - (maxY - minY) * scale) / 2 - minY * scale;
     const centerY = (height - (maxX - minX) * scale) / 2 - minX * scale;
 
-    // Status colors
     const statusColors = {
       active: '#10b981',
       maintenance: '#3b82f6',
@@ -205,23 +236,105 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       archived: '#6b7280',
     };
 
-    // Draw links (horizontal) with adaptive styling
-    const link = linkHorizontal<any, any>()
-      .x(d => d.y)
-      .y(d => d.x);
+    const rectWidth = deviceType === 'tablet' ? 120 : 160;
+    const rectHeight = deviceType === 'tablet' ? 36 : 40;
+    const versionCircleRadius = nodeRadius - (deviceType === 'tablet' ? 3 : 4);
+    const rootCircleRadius = nodeRadius;
+    const getNodeEdgeOffset = (nodeType: string) => {
+      if (nodeType === 'project') return rectWidth / 2;
+      if (nodeType === 'version') return versionCircleRadius;
+      if (nodeType === 'root') return rootCircleRadius;
+      return rectWidth / 2;
+    };
+    
+    const createEdgeToEdgePath = (d: any) => {
+      const sourceY = d.source.y;
+      const targetY = d.target.y;
+      const sourceX = d.source.x;
+      const targetX = d.target.x;
+      const sourceType = d.source.data.type;
+      const targetType = d.target.data.type;
+      const sourceOffset = getNodeEdgeOffset(sourceType);
+      const targetOffset = getNodeEdgeOffset(targetType);
+      const goingRight = targetY > sourceY;
+      
+      let x0, x1;
+      if (goingRight) {
+        x0 = sourceY + sourceOffset;
+        x1 = targetY - targetOffset;
+      } else {
+        x0 = sourceY - sourceOffset;
+        x1 = targetY + targetOffset;
+      }
+      
+      const y0 = sourceX;
+      const y1 = targetX;
+      const mx = (x0 + x1) / 2;
+      return `M${x0},${y0} C${mx},${y0} ${mx},${y1} ${x1},${y1}`;
+    };
 
     g.selectAll('.link')
       .data(treeData_.links())
       .enter()
       .append('path')
       .attr('class', 'link')
-      .attr('d', link as any)
+      .attr('d', createEdgeToEdgePath)
       .attr('fill', 'none')
       .attr('stroke', 'var(--color-border)')
-      .attr('stroke-width', deviceType === 'tablet' ? 2 : 2)
-      .attr('opacity', deviceType === 'tablet' ? 0.4 : 0.4);
+      .attr('stroke-width', 2)
+      .attr('opacity', 0.5);
 
-    // Draw nodes
+    const additionalLinks: Array<{ source: any; target: any }> = [];
+    treeData_.descendants().forEach(node => {
+      const project = node.data.data as Project;
+      if (project?.linkedProjects && project.linkedProjects.length > 0) {
+        project.linkedProjects.forEach(linkedTitle => {
+          const targetNode = treeData_.descendants().find(n => n.data.name === linkedTitle);
+          if (targetNode) {
+            additionalLinks.push({ source: node, target: targetNode });
+          }
+        });
+      }
+    });
+
+    const createLinkedPath = (source: any, target: any) => {
+      const sourceY = source.y;
+      const targetY = target.y;
+      const sourceX = source.x;
+      const targetX = target.x;
+      const sourceType = source.data.type;
+      const targetType = target.data.type;
+      const sourceOffset = getNodeEdgeOffset(sourceType);
+      const targetOffset = getNodeEdgeOffset(targetType);
+      const goingRight = targetY > sourceY;
+      let x0, x1;
+      if (goingRight) {
+        x0 = sourceY + sourceOffset;
+        x1 = targetY - targetOffset;
+      } else {
+        x0 = sourceY - sourceOffset;
+        x1 = targetY + targetOffset;
+      }
+      
+      const y0 = sourceX;
+      const y1 = targetX;
+      const mx = (x0 + x1) / 2;
+      
+      return `M${x0},${y0} C${mx},${y0} ${mx},${y1} ${x1},${y1}`;
+    };
+    
+    g.selectAll('.linked-link')
+      .data(additionalLinks)
+      .enter()
+      .append('path')
+      .attr('class', 'linked-link')
+      .attr('d', d => createLinkedPath(d.source, d.target))
+      .attr('fill', 'none')
+      .attr('stroke', '#06b6d4')
+      .attr('stroke-width', 2)
+      .attr('stroke-dasharray', '5,5')
+      .attr('opacity', 0.6);
+
     const node = g
       .selectAll('.node')
       .data(treeData_.descendants())
@@ -229,11 +342,6 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       .append('g')
       .attr('class', 'node')
       .attr('transform', d => `translate(${d.y},${d.x})`);
-
-    // Add rectangles for project nodes (clickable cards)
-    // Compact size for tablet with touch overlay
-    const rectWidth = deviceType === 'tablet' ? 120 : 160;
-    const rectHeight = deviceType === 'tablet' ? 36 : 40;
 
     node
       .filter(d => d.data.type === 'project')
@@ -273,7 +381,6 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       .on('click', (event, d) => {
         const project = d.data.data as Project;
         setSelectedProject(project);
-        // On tablet, show tooltip on tap
         if (deviceType === 'tablet') {
           setTooltip({
             visible: true,
@@ -282,18 +389,13 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
             content: project,
             type: 'project',
           });
-          // Hide tooltip after 3 seconds
           setTimeout(() => {
             setTooltip(prev => ({ ...prev, visible: false }));
           }, 3000);
         }
       });
 
-    // Add circles for version nodes
-    // Add transparent larger circle for touch target on tablet
     const versionNodes = node.filter(d => d.data.type === 'version');
-
-    // Add invisible larger circle for better touch targets on tablet
     if (deviceType === 'tablet') {
       versionNodes
         .append('circle')
@@ -309,7 +411,6 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
             releaseStatus: versionData.releaseStatus,
             items: versionData.items,
           });
-          // Show tooltip on tap for tablet
           setTooltip({
             visible: true,
             x: event.pageX,
@@ -369,7 +470,6 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
         }
       });
 
-    // Add root circle
     node
       .filter(d => d.data.type === 'root')
       .append('circle')
@@ -378,7 +478,6 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       .attr('stroke', '#0a0a0a')
       .attr('stroke-width', 3);
 
-    // Add text labels with adaptive sizing - smaller on tablet
     node
       .append('text')
       .attr('dy', d => {
@@ -403,7 +502,6 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       .style('pointer-events', 'none')
       .style('user-select', 'none');
 
-    // Add zoom behavior with device-specific constraints
     const zoomBehavior = zoom<SVGSVGElement, unknown>()
       .scaleExtent(deviceType === 'tablet' ? [0.5, 2] : [0.1, 3])
       .on('zoom', (event) => {
@@ -412,7 +510,6 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
 
     svg.call(zoomBehavior as any);
 
-    // Set initial transform to center and fit everything
     const initialTransform = zoomIdentity
       .translate(centerX, centerY)
       .scale(scale);

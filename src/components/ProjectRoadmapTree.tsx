@@ -28,11 +28,7 @@ export default function ProjectRoadmapTree({ roadmap, currentVersion, projectTit
 
   useEffect(() => {
     if (!svgRef.current || !roadmap || roadmap.length === 0) return;
-
-    // Clear previous content
     select(svgRef.current).selectAll('*').remove();
-
-    // Build tree data structure
     const treeData: TreeNode = {
       name: `${projectTitle} ${currentVersion ? `v${currentVersion}` : ''}`,
       children: roadmap.map(milestone => ({
@@ -44,39 +40,30 @@ export default function ProjectRoadmapTree({ roadmap, currentVersion, projectTit
       })),
     };
 
-    // Dimensions
     const width = containerRef.current?.clientWidth || 800;
     const height = Math.max(400, roadmap.length * 200);
     const margin = { top: 40, right: 120, bottom: 40, left: 120 };
-
-    // Create SVG
     const svg = select(svgRef.current)
       .attr('width', width)
       .attr('height', height)
       .style('font-family', '"Cascadia Code", monospace')
       .style('font-size', '12px');
 
-    // Create container group for zoom
     const g = svg
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // Create tree layout
     const treeLayout = d3.tree<TreeNode>()
       .size([height - margin.top - margin.bottom, width - margin.left - margin.right]);
 
-    // Create hierarchy
     const root = d3.hierarchy(treeData);
     const treeNodes = treeLayout(root);
-
-    // Status colors
     const statusColors = {
       completed: '#10b981',
       'in-progress': '#06b6d4',
       planned: '#6b7280',
     };
 
-    // Draw links
     const link = linkHorizontal<any, any>()
       .x(d => d.y)
       .y(d => d.x);
@@ -92,7 +79,6 @@ export default function ProjectRoadmapTree({ roadmap, currentVersion, projectTit
       .attr('stroke-width', 2)
       .attr('opacity', 0.6);
 
-    // Draw nodes
     const node = g
       .selectAll('.node')
       .data(treeNodes.descendants())
@@ -101,16 +87,15 @@ export default function ProjectRoadmapTree({ roadmap, currentVersion, projectTit
       .attr('class', 'node')
       .attr('transform', d => `translate(${d.y},${d.x})`);
 
-    // Add circles
     node
       .append('circle')
       .attr('r', d => {
-        if (d.depth === 0) return 8; // Root
-        if (d.depth === 1) return 6; // Version
-        return 4; // Feature
+        if (d.depth === 0) return 8;
+        if (d.depth === 1) return 6;
+        return 4;
       })
       .attr('fill', d => {
-        if (d.depth === 0) return '#06b6d4'; // Root: cyan
+        if (d.depth === 0) return '#06b6d4';
         if (d.depth === 1 && d.data.status) {
           return statusColors[d.data.status];
         }
@@ -125,7 +110,6 @@ export default function ProjectRoadmapTree({ roadmap, currentVersion, projectTit
       .attr('stroke-width', 2)
       .style('cursor', 'pointer');
 
-    // Add pulse animation for in-progress nodes
     node
       .filter(d => d.depth === 1 && d.data.status === 'in-progress')
       .append('circle')
@@ -141,7 +125,6 @@ export default function ProjectRoadmapTree({ roadmap, currentVersion, projectTit
       .attr('dur', '2s')
       .attr('repeatCount', 'indefinite');
 
-    // Add text labels
     node
       .append('text')
       .attr('dy', d => (d.depth === 0 ? -15 : 3))
@@ -169,7 +152,6 @@ export default function ProjectRoadmapTree({ roadmap, currentVersion, projectTit
       .attr('font-weight', d => (d.depth <= 1 ? 'bold' : 'normal'))
       .style('user-select', 'none');
 
-    // Add zoom behavior
     const zoomBehavior = zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 2])
       .on('zoom', (event) => {
@@ -177,8 +159,6 @@ export default function ProjectRoadmapTree({ roadmap, currentVersion, projectTit
       });
 
     svg.call(zoomBehavior as any);
-
-    // Set initial zoom
     svg.call(zoomBehavior.transform as any, zoomIdentity.translate(margin.left, margin.top));
 
   }, [roadmap, currentVersion, projectTitle]);

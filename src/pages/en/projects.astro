@@ -22,12 +22,13 @@ const projects = projectsCollection.map(project => ({
   projectType: project.data.projectType,
   category: project.data.category,
   parentProject: project.data.parentProject,
+  linkedProjects: project.data.linkedProjects,
   roadmap: project.data.roadmap,
 }));
 ---
 
 <BaseLayout title="Projects - vremyavnikuda" description="Personal projects and open source contributions">
-  <div class="max-w-7xl mx-auto px-4 py-8">
+  <div class="w-full px-2 py-4">
     {projects.length === 0 ? (
       <p class="text-[var(--color-text-secondary)]">Projects coming soon!</p>
     ) : (

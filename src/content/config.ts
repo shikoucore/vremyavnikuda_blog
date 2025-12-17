@@ -28,6 +28,7 @@ const projects = defineCollection({
     projectType: z.enum(['category', 'project', 'contribution']).default('project'),
     category: z.enum(['projects', 'contributing']).optional(),
     parentProject: z.string().optional(), // ID родительского проекта для ветвления
+    linkedProjects: z.array(z.string()).optional(), // Дополнительные связи с другими проектами
     // Roadmap fields
     status: z.enum(['active', 'maintenance', 'completed', 'archived']).default('active'),
     version: z.string().optional(),

@@ -33,7 +33,6 @@ export default function HeroCanvas() {
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Create 3D Cube wireframe
     const cubeSize = 15;
     const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
     const cubeEdges = new THREE.EdgesGeometry(cubeGeometry);
@@ -45,7 +44,6 @@ export default function HeroCanvas() {
     const cube = new THREE.LineSegments(cubeEdges, cubeMaterial);
     scene.add(cube);
 
-    // Create grid planes (memory layers)
     const gridGroup = new THREE.Group();
     const layers = 3;
     for (let i = 0; i < layers; i++) {
@@ -58,7 +56,6 @@ export default function HeroCanvas() {
     }
     scene.add(gridGroup);
 
-    // Particles inside cube (memory blocks)
     const particleCount = window.innerWidth < 768 ? 40 : 80;
     const particleGeometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
@@ -69,25 +66,22 @@ export default function HeroCanvas() {
       positions[i] = (Math.random() - 0.5) * (cubeSize - 2);
       positions[i + 1] = (Math.random() - 0.5) * (cubeSize - 2);
       positions[i + 2] = (Math.random() - 0.5) * (cubeSize - 2);
-      
       velocities[i] = (Math.random() - 0.5) * 0.03;
       velocities[i + 1] = (Math.random() - 0.5) * 0.03;
       velocities[i + 2] = (Math.random() - 0.5) * 0.03;
 
-      // Color coding: green (heap), cyan (stack), yellow (active)
       const rand = Math.random();
       if (rand < 0.6) {
-        colors[i] = 0.06; colors[i + 1] = 0.65; colors[i + 2] = 0.91; // cyan
+        colors[i] = 0.06; colors[i + 1] = 0.65; colors[i + 2] = 0.91;
       } else if (rand < 0.85) {
-        colors[i] = 0.06; colors[i + 1] = 0.73; colors[i + 2] = 0.51; // green
+        colors[i] = 0.06; colors[i + 1] = 0.73; colors[i + 2] = 0.51;
       } else {
-        colors[i] = 0.98; colors[i + 1] = 0.75; colors[i + 2] = 0.14; // yellow
+        colors[i] = 0.98; colors[i + 1] = 0.75; colors[i + 2] = 0.14;
       }
     }
 
     particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
     const particleMaterial = new THREE.PointsMaterial({
       size: window.innerWidth < 768 ? 2.5 : 3,
       transparent: true,
@@ -98,8 +92,6 @@ export default function HeroCanvas() {
 
     const particles = new THREE.Points(particleGeometry, particleMaterial);
     scene.add(particles);
-
-    // Connection lines (pointers)
     const lineMaterial = new THREE.LineBasicMaterial({
       color: 0x0ea5e9,
       transparent: true,
@@ -110,8 +102,6 @@ export default function HeroCanvas() {
     const targetFPS = 30;
     const frameInterval = 1000 / targetFPS;
     let time = 0;
-
-    // Mouse move handler
     const handleMouseMove = (event: MouseEvent) => {
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return;
@@ -120,29 +110,20 @@ export default function HeroCanvas() {
     };
 
     window.addEventListener('mousemove', handleMouseMove);
-
     function animate(currentTime: number) {
       frameIdRef.current = requestAnimationFrame(animate);
-
       const deltaTime = currentTime - lastTime;
       if (deltaTime < frameInterval) return;
       lastTime = currentTime;
       time += 0.01;
-
-      // Rotate cube slowly
       cube.rotation.x = Math.sin(time * 0.3) * 0.2 + mouseRef.current.y * 0.3;
       cube.rotation.y += 0.003;
       cube.rotation.z = Math.cos(time * 0.2) * 0.1 + mouseRef.current.x * 0.2;
-
-      // Rotate grid layers
       gridGroup.rotation.x = cube.rotation.x;
       gridGroup.rotation.y = cube.rotation.y;
       gridGroup.rotation.z = cube.rotation.z;
-
-      // Update particles
       const positionAttribute = particles.geometry.attributes.position;
       if (!positionAttribute) return;
-      
       const positions = positionAttribute.array as Float32Array;
       const cubeHalf = cubeSize / 2 - 0.5;
 
@@ -160,8 +141,7 @@ export default function HeroCanvas() {
         positions[i] = px + vx;
         positions[i + 1] = py + vy;
         positions[i + 2] = pz + vz;
-        
-        // Bounce inside cube
+
         if (Math.abs(px + vx) > cubeHalf) velocities[i] = vx * -1;
         if (Math.abs(py + vy) > cubeHalf) velocities[i + 1] = vy * -1;
         if (Math.abs(pz + vz) > cubeHalf) velocities[i + 2] = vz * -1;
@@ -171,7 +151,6 @@ export default function HeroCanvas() {
         positionAttribute.needsUpdate = true;
       }
 
-      // Create connection lines (pointers between memory blocks)
       const linePositions: number[] = [];
       const maxConnections = window.innerWidth < 768 ? 20 : 40;
       let connectionCount = 0;
@@ -201,11 +180,9 @@ export default function HeroCanvas() {
         }
       }
 
-      // Remove old lines
       const oldLines = scene.children.filter(child => child.type === 'LineSegments' && child !== cube);
       oldLines.forEach(line => scene.remove(line));
       
-      // Add new lines
       if (linePositions.length > 0) {
         const lineGeometry = new THREE.BufferGeometry();
         lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
@@ -217,7 +194,6 @@ export default function HeroCanvas() {
     }
 
     animate(0);
-
     const handleResize = () => {
       if (!containerRef.current || !rendererRef.current) return;
       const newWidth = containerRef.current.clientWidth;
