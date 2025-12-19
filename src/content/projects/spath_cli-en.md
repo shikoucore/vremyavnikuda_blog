@@ -10,13 +10,19 @@ projectType: "project"
 category: "projects"
 parentProject: "spath"
 status: "active"
-version: "0.1.0"
+version: "0.1.1"
 roadmap:
   - version: "0.1.0"
     releaseStatus: "release"
     items:
       - "Initial release (2025-12-13)"
       - "Published on crates.io"
+  - version: "0.1.1"
+    releaseStatus: "release"
+    items:
+      - "New verify command added"
+      - "Fixed environment variable expansion bug"
+      - "Improved security classification"
 ---
 
 Command-line tool for managing Windows PATH.
