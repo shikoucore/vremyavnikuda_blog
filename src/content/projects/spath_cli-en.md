@@ -23,6 +23,10 @@ roadmap:
       - "New verify command added"
       - "Fixed environment variable expansion bug"
       - "Improved security classification"
+  - version: "0.1.2"
+    releaseStatus: "dev"
+    items:
+      - "In development"
 ---
 
 Command-line tool for managing Windows PATH.

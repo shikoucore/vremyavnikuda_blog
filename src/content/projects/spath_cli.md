@@ -23,6 +23,10 @@ roadmap:
       - "新しい verify コマンド追加"
       - "環境変数展開のバグ修正"
       - "セキュリティ分類の改善"
+  - version: "0.1.2"
+    releaseStatus: "dev"
+    items:
+      - "開発中"
 ---
 
 Windows PATHを管理するためのコマンドラインツール。
