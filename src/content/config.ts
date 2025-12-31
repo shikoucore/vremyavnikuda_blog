@@ -40,4 +40,17 @@ const projects = defineCollection({
   }),
 });
 
-export const collections = { blog, projects };
+const achievements = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    date: z.coerce.date(),
+    organization: z.string(),
+    image: z.string(), // Path to certificate image
+    verificationUrl: z.string().url().optional(),
+    lang: z.enum(['ja', 'en']).default('ja'),
+  }),
+});
+
+export const collections = { blog, projects, achievements };

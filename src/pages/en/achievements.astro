@@ -1,0 +1,139 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const achievements = await getCollection('achievements', ({ data }) => {
+  return data.lang === 'en';
+});
+
+// Sort by date (newest first)
+const sortedAchievements = achievements.sort((a, b) => 
+  b.data.date.valueOf() - a.data.date.valueOf()
+);
+
+const title = 'Achievements';
+const description = 'My achievements and certificates';
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold text-cyan-400 mb-8">{title}</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {sortedAchievements.map((achievement, index) => (
+        <div 
+          class="achievement-card bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-lg overflow-hidden hover:border-cyan-400 transition-all cursor-pointer"
+          data-achievement-index={index}
+        >
+          <div class="aspect-video bg-[var(--color-bg)] flex items-center justify-center overflow-hidden">
+            <img 
+              src={achievement.data.image} 
+              alt={achievement.data.title}
+              class="w-full h-full object-contain"
+            />
+          </div>
+          <div class="p-4">
+            <h2 class="text-lg font-bold text-cyan-400">{achievement.data.title}</h2>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <!-- Modal for full image view -->
+  <div id="achievement-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-80 p-4">
+    <div class="relative max-w-6xl max-h-[90vh] flex flex-col">
+      <button
+        id="close-modal"
+        class="absolute -top-10 right-0 text-white hover:text-cyan-400 text-3xl font-bold transition-colors z-10"
+        aria-label="Close modal"
+      >
+        ✕
+      </button>
+      <div class="bg-[var(--color-bg)] border border-cyan-400 rounded-lg overflow-hidden flex flex-col">
+        <div class="p-4 flex items-center justify-center bg-[var(--color-bg)]">
+          <img 
+            id="modal-image"
+            src=""
+            alt=""
+            class="max-w-full max-h-[70vh] object-contain"
+          />
+        </div>
+        <div class="p-3 border-t border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
+          <h2 id="modal-title" class="text-lg font-bold text-cyan-400 mb-1"></h2>
+          <p id="modal-organization" class="text-xs text-[var(--color-text-secondary)] mb-1"></p>
+          <p id="modal-description" class="text-sm text-[var(--color-text)] mb-1"></p>
+          <p id="modal-date" class="text-xs text-[var(--color-text-secondary)]"></p>
+          <div id="modal-verification" class="mt-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .achievement-card {
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    
+    .achievement-card:hover {
+      transform: translateY(-4px);
+    }
+
+    #achievement-modal.show {
+      display: flex;
+    }
+  </style>
+
+  <script define:vars={{ achievements: sortedAchievements }}>
+    const modal = document.getElementById('achievement-modal');
+    const closeBtn = document.getElementById('close-modal');
+    const cards = document.querySelectorAll('.achievement-card');
+
+    cards.forEach((card) => {
+      card.addEventListener('click', () => {
+        const index = parseInt(card.getAttribute('data-achievement-index'));
+        const achievement = achievements[index];
+        
+        document.getElementById('modal-image').src = achievement.data.image;
+        document.getElementById('modal-image').alt = achievement.data.title;
+        document.getElementById('modal-title').textContent = achievement.data.title;
+        document.getElementById('modal-organization').textContent = achievement.data.organization;
+        document.getElementById('modal-description').textContent = achievement.data.description;
+        document.getElementById('modal-date').textContent = new Date(achievement.data.date).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+        
+        const verificationDiv = document.getElementById('modal-verification');
+        if (achievement.data.verificationUrl) {
+          verificationDiv.innerHTML = `<a href="${achievement.data.verificationUrl}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:underline">Verification Link →</a>`;
+        } else {
+          verificationDiv.innerHTML = '';
+        }
+        
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+
+    closeBtn.addEventListener('click', () => {
+      modal.classList.remove('show');
+      document.body.style.overflow = '';
+    });
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('show')) {
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+      }
+    });
+  </script>
+</BaseLayout>
