@@ -10,7 +10,7 @@ projectType: "project"
 category: "projects"
 parentProject: "spath"
 status: "active"
-version: "0.1.2"
+version: "0.1.3"
 roadmap:
   - version: "0.1.0"
     releaseStatus: "release"
@@ -30,6 +30,11 @@ roadmap:
       - "構造化ロギング (tracing)"
       - "バックアップファイルのACL保護"
       - "コード品質の改善"
+  - version: "0.1.3"
+    releaseStatus: "release"
+    items:
+      - "保守性向上のための大規模リファクタリング"
+      - "関心の分離改善 (I/Oとビジネスロジックの分離)"
 ---
 
 Windows PATHを管理するためのコマンドラインツール。

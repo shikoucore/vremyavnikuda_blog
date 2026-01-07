@@ -10,7 +10,7 @@ projectType: "project"
 category: "projects"
 parentProject: "spath"
 status: "active"
-version: "0.1.2"
+version: "0.1.3"
 roadmap:
   - version: "0.1.0"
     releaseStatus: "release"
@@ -30,6 +30,11 @@ roadmap:
       - "Structured logging with tracing"
       - "ACL protection for backup files"
       - "Code quality improvements"
+  - version: "0.1.3"
+    releaseStatus: "release"
+    items:
+      - "Major code refactoring for better maintainability"
+      - "Improved separation of concerns (I/O separated from business logic)"
 ---
 
 Command-line tool for managing Windows PATH.
