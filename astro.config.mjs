@@ -27,7 +27,7 @@ export default defineConfig({
   },
   markdown: {
     shikiConfig: {
-      theme: 'github-dark',
+      theme: 'kanagawa-wave',
       wrap: true,
     },
   },
