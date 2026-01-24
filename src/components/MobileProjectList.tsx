@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react';
 
+type ReleaseStatus = 'release' | 'dev' | 'close';
+
 interface Project {
   id: string;
   title: string;
@@ -14,7 +16,7 @@ interface Project {
   parentProject?: string;
   roadmap?: Array<{
     version: string;
-    releaseStatus: 'release' | 'dev';
+    releaseStatus: ReleaseStatus;
     items?: string[];
   }>;
 }
@@ -33,7 +35,7 @@ export default function MobileProjectList({ projects }: Props) {
   const [selectedVersion, setSelectedVersion] = useState<{
     projectTitle: string;
     version: string;
-    releaseStatus: 'release' | 'dev';
+    releaseStatus: ReleaseStatus;
     items?: string[];
   } | null>(null);
 
@@ -84,6 +86,27 @@ export default function MobileProjectList({ projects }: Props) {
     maintenance: 'bg-blue-500/20 text-blue-400 border-blue-500/40',
     completed: 'bg-purple-500/20 text-purple-400 border-purple-500/40',
     archived: 'bg-gray-500/20 text-gray-400 border-gray-500/40',
+  };
+
+  const releaseStatusStyles: Record<ReleaseStatus, { row: string; badge: string; label: string; icon: string }> = {
+    release: {
+      row: 'bg-green-500/10 text-green-400 border-green-500/30',
+      badge: 'bg-green-900/30 text-green-400',
+      label: 'Release',
+      icon: '🟢',
+    },
+    dev: {
+      row: 'bg-orange-500/10 text-orange-400 border-orange-500/30',
+      badge: 'bg-orange-900/30 text-orange-400',
+      label: 'Dev',
+      icon: '🟠',
+    },
+    close: {
+      row: 'bg-red-500/10 text-red-400 border-red-500/30',
+      badge: 'bg-red-900/30 text-red-400',
+      label: 'Close',
+      icon: '🔴',
+    },
   };
 
   const renderProject = (project: ProjectWithChildren, level: number = 0) => {
@@ -150,35 +173,34 @@ export default function MobileProjectList({ projects }: Props) {
             {/* Versions */}
             {hasVersions && (
               <div className="space-y-1" style={{ marginLeft: `${(level + 1) * 16}px` }}>
-                {project.roadmap!.map((milestone) => (
-                  <button
-                    key={milestone.version}
-                    onClick={() => setSelectedVersion({
-                      projectTitle: project.title,
-                      version: milestone.version,
-                      releaseStatus: milestone.releaseStatus,
-                      items: milestone.items,
-                    })}
-                    className={`w-full flex items-center min-h-[44px] p-3 rounded-lg border transition-colors ${
-                      milestone.releaseStatus === 'release'
-                        ? 'bg-green-500/10 text-green-400 border-green-500/30'
-                        : 'bg-orange-500/10 text-orange-400 border-orange-500/30'
-                    } hover:bg-opacity-80`}
-                  >
-                    <span className="text-lg mr-2">
-                      {milestone.releaseStatus === 'release' ? '🟢' : '🟠'}
-                    </span>
-                    <span className="font-mono text-sm">v{milestone.version}</span>
-                    <span className="ml-2 text-xs opacity-70">
-                      {milestone.releaseStatus === 'release' ? 'Release' : 'Dev'}
-                    </span>
-                    {milestone.items && milestone.items.length > 0 && (
-                      <span className="ml-auto text-xs opacity-50">
-                        {milestone.items.length} item{milestone.items.length > 1 ? 's' : ''}
+                {project.roadmap!.map((milestone) => {
+                  const statusStyle = releaseStatusStyles[milestone.releaseStatus];
+                  return (
+                    <button
+                      key={milestone.version}
+                      onClick={() => setSelectedVersion({
+                        projectTitle: project.title,
+                        version: milestone.version,
+                        releaseStatus: milestone.releaseStatus,
+                        items: milestone.items,
+                      })}
+                      className={`w-full flex items-center min-h-[44px] p-3 rounded-lg border transition-colors ${statusStyle.row} hover:bg-opacity-80`}
+                    >
+                      <span className="text-lg mr-2">
+                        {statusStyle.icon}
                       </span>
-                    )}
-                  </button>
-                ))}
+                      <span className="font-mono text-sm">v{milestone.version}</span>
+                      <span className="ml-2 text-xs opacity-70">
+                        {statusStyle.label}
+                      </span>
+                      {milestone.items && milestone.items.length > 0 && (
+                        <span className="ml-auto text-xs opacity-50">
+                          {milestone.items.length} item{milestone.items.length > 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -275,22 +297,24 @@ export default function MobileProjectList({ projects }: Props) {
                     <div key={milestone.version} className="border border-[var(--color-border)] rounded-lg p-3">
                       <h4 className="font-bold mb-2 flex items-center gap-2">
                         <span>v{milestone.version}</span>
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          milestone.releaseStatus === 'release' 
-                            ? 'bg-green-900/30 text-green-400' 
-                            : 'bg-orange-900/30 text-orange-400'
-                        }`}>
-                          {milestone.releaseStatus === 'release' ? 'Release' : 'Dev'}
+                        <span className={`text-xs px-2 py-1 rounded ${releaseStatusStyles[milestone.releaseStatus].badge}`}>
+                          {releaseStatusStyles[milestone.releaseStatus].label}
                         </span>
                       </h4>
                       {milestone.items && milestone.items.length > 0 && (
-                        <ul className="space-y-1">
-                          {milestone.items.map((item, idx) => (
-                            <li key={idx} className="text-sm text-[var(--color-text-secondary)]">
-                              • {item}
-                            </li>
-                          ))}
-                        </ul>
+                        milestone.releaseStatus === 'close' ? (
+                          <p className="text-sm text-[var(--color-text-secondary)]">
+                            {milestone.items.join(' ')}
+                          </p>
+                        ) : (
+                          <ul className="space-y-1">
+                            {milestone.items.map((item, idx) => (
+                              <li key={idx} className="text-sm text-[var(--color-text-secondary)]">
+                                • {item}
+                              </li>
+                            ))}
+                          </ul>
+                        )
                       )}
                     </div>
                   ))}
@@ -316,12 +340,8 @@ export default function MobileProjectList({ projects }: Props) {
                 <h2 className="text-xl font-bold text-cyan-400">{selectedVersion.projectTitle}</h2>
                 <div className="flex items-center gap-2 mt-2">
                   <h3 className="text-lg font-bold">v{selectedVersion.version}</h3>
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    selectedVersion.releaseStatus === 'release' 
-                      ? 'bg-green-900/30 text-green-400' 
-                      : 'bg-orange-900/30 text-orange-400'
-                  }`}>
-                    {selectedVersion.releaseStatus === 'release' ? 'Release' : 'Dev'}
+                  <span className={`text-xs px-2 py-1 rounded ${releaseStatusStyles[selectedVersion.releaseStatus].badge}`}>
+                    {releaseStatusStyles[selectedVersion.releaseStatus].label}
                   </span>
                 </div>
               </div>
@@ -336,13 +356,19 @@ export default function MobileProjectList({ projects }: Props) {
             {selectedVersion.items && selectedVersion.items.length > 0 ? (
               <div>
                 <h4 className="text-base font-bold text-cyan-400 mb-3">Changes</h4>
-                <ul className="space-y-2">
-                  {selectedVersion.items.map((item, idx) => (
-                    <li key={idx} className="text-sm text-[var(--color-text)]">
-                      • {item}
-                    </li>
-                  ))}
-                </ul>
+                {selectedVersion.releaseStatus === 'close' ? (
+                  <p className="text-sm text-[var(--color-text)]">
+                    {selectedVersion.items.join(' ')}
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {selectedVersion.items.map((item, idx) => (
+                      <li key={idx} className="text-sm text-[var(--color-text)]">
+                        • {item}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             ) : (
               <p className="text-sm text-[var(--color-text-secondary)] italic">

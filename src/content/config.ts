@@ -34,7 +34,7 @@ const projects = defineCollection({
     version: z.string().optional(),
     roadmap: z.array(z.object({
       version: z.string(),
-      releaseStatus: z.enum(['release', 'dev']),
+      releaseStatus: z.enum(['release', 'dev', 'close']),
       items: z.array(z.string()).optional(),
     })).optional(),
   }),

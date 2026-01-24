@@ -10,7 +10,7 @@ projectType: "project"
 category: "projects"
 parentProject: "projects"
 status: "active"
-version: "0.1.3"
+version: "0.1.4"
 roadmap:
   - version: "0.1.0"
     releaseStatus: "release"
@@ -19,6 +19,14 @@ roadmap:
   - version: "0.1.3"
     releaseStatus: "release"
   - version: "0.1.4"
+    releaseStatus: "release"
+    items:
+      - "Stabilized embedded slurp and improved CI"
+      - "Fixed CLI modes and config notes"
+      - "Bumped pkgver to 0.1.4"
+      - "Added slurp as a git submodule"
+      - "Embedded slurp binary and added AUR support"
+  - version: "0.1.5"
     releaseStatus: "dev"
 ---
 

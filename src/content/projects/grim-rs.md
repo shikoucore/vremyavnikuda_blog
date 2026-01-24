@@ -10,7 +10,7 @@ projectType: "project"
 category: "projects"
 parentProject: "hyprshot-rs"
 status: "active"
-version: "0.1.3"
+version: "0.1.4"
 roadmap:
   - version: "0.1.0"
     releaseStatus: "release"
@@ -28,6 +28,12 @@ roadmap:
       - "メモリ使用量の最適化（不要なクローンを削除）"
       - "包括的なテストカバレッジの追加"
   - version: "0.1.4"
+    releaseStatus: "release"
+    items:
+      - "Fixed Wayland region capture under fractional scaling"
+      - "Handled fractional scaling without performance regressions"
+      - "Moved geometry tests to integration suite and removed unwraps in tests"
+  - version: "0.1.5"
     releaseStatus: "dev"
 ---
 

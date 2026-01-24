@@ -6,6 +6,8 @@ import { zoom, zoomIdentity } from 'd3-zoom';
 import { useDeviceType } from '../hooks/useMediaQuery';
 import MobileProjectList from './MobileProjectList';
 
+type ReleaseStatus = 'release' | 'dev' | 'close';
+
 interface Project {
   id: string;
   title: string;
@@ -21,7 +23,7 @@ interface Project {
   linkedProjects?: string[];
   roadmap?: Array<{
     version: string;
-    releaseStatus: 'release' | 'dev';
+    releaseStatus: ReleaseStatus;
     items?: string[];
   }>;
 }
@@ -33,7 +35,7 @@ interface Props {
 interface TreeNode {
   name: string;
   type: 'root' | 'project' | 'version';
-  data?: Project | { version: string; releaseStatus: 'release' | 'dev'; items?: string[] };
+  data?: Project | { version: string; releaseStatus: ReleaseStatus; items?: string[] };
   children?: TreeNode[];
 }
 
@@ -52,9 +54,27 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
   const [selectedVersion, setSelectedVersion] = useState<{
     projectTitle: string;
     version: string;
-    releaseStatus: 'release' | 'dev';
+    releaseStatus: ReleaseStatus;
     items?: string[];
   } | null>(null);
+
+  const releaseStatusLabel = (status: ReleaseStatus) => {
+    if (status === 'release') return 'Release';
+    if (status === 'close') return 'Close';
+    return 'Dev';
+  };
+
+  const releaseStatusBadgeClass = (status: ReleaseStatus) => {
+    if (status === 'release') return 'bg-green-900/30 text-green-400';
+    if (status === 'close') return 'bg-red-900/30 text-red-400';
+    return 'bg-orange-900/30 text-orange-400';
+  };
+
+  const releaseStatusColor = (status: ReleaseStatus) => {
+    if (status === 'release') return '#10b981';
+    if (status === 'close') return '#ef4444';
+    return '#f59e0b';
+  };
 
   if (deviceType === 'mobile') {
     return <MobileProjectList projects={projects} />;
@@ -403,7 +423,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
         .attr('fill', 'transparent')
         .style('cursor', 'pointer')
         .on('click', (event, d) => {
-          const versionData = d.data.data as { version: string; releaseStatus: 'release' | 'dev'; items?: string[] };
+          const versionData = d.data.data as { version: string; releaseStatus: ReleaseStatus; items?: string[] };
           const parentProject = d.parent?.data.data as Project;
           setSelectedVersion({
             projectTitle: parentProject.title,
@@ -428,12 +448,12 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       .append('circle')
       .attr('r', nodeRadius - (deviceType === 'tablet' ? 3 : 4))
       .attr('fill', d => {
-        const versionData = d.data.data as { version: string; releaseStatus: 'release' | 'dev'; items?: string[] };
-        return versionData.releaseStatus === 'release' ? '#10b981' : '#f59e0b';
+        const versionData = d.data.data as { version: string; releaseStatus: ReleaseStatus; items?: string[] };
+        return releaseStatusColor(versionData.releaseStatus);
       })
       .attr('stroke', d => {
-        const versionData = d.data.data as { version: string; releaseStatus: 'release' | 'dev'; items?: string[] };
-        return versionData.releaseStatus === 'dev' ? '#f59e0b' : '#0a0a0a';
+        const versionData = d.data.data as { version: string; releaseStatus: ReleaseStatus; items?: string[] };
+        return releaseStatusColor(versionData.releaseStatus);
       })
       .attr('stroke-width', deviceType === 'tablet' ? 2 : 2)
       .style('cursor', 'pointer')
@@ -441,7 +461,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       .on('mouseenter', function (event, d) {
         if (deviceType === 'desktop') {
           select(this).attr('r', nodeRadius);
-          const versionData = d.data.data as { version: string; releaseStatus: 'release' | 'dev'; items?: string[] };
+          const versionData = d.data.data as { version: string; releaseStatus: ReleaseStatus; items?: string[] };
           setTooltip({
             visible: true,
             x: event.pageX,
@@ -459,7 +479,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       })
       .on('click', (_event, d) => {
         if (deviceType === 'desktop') {
-          const versionData = d.data.data as { version: string; releaseStatus: 'release' | 'dev'; items?: string[] };
+          const versionData = d.data.data as { version: string; releaseStatus: ReleaseStatus; items?: string[] };
           const parentProject = d.parent?.data.data as Project;
           setSelectedVersion({
             projectTitle: parentProject.title,
@@ -558,21 +578,24 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <h4 className="font-bold text-cyan-400">v{tooltip.content.version}</h4>
-                <span className={`text-xs px-2 py-1 rounded ${tooltip.content.releaseStatus === 'release'
-                  ? 'bg-green-900/30 text-green-400'
-                  : 'bg-orange-900/30 text-orange-400'
-                  }`}>
-                  {tooltip.content.releaseStatus === 'release' ? 'Release' : 'Dev'}
+                <span className={`text-xs px-2 py-1 rounded ${releaseStatusBadgeClass(tooltip.content.releaseStatus)}`}>
+                  {releaseStatusLabel(tooltip.content.releaseStatus)}
                 </span>
               </div>
               {tooltip.content.items && tooltip.content.items.length > 0 && (
-                <ul className="text-sm space-y-1">
-                  {tooltip.content.items.map((item: string, idx: number) => (
-                    <li key={idx} className="text-[var(--color-text-secondary)]">
-                      • {item}
-                    </li>
-                  ))}
-                </ul>
+                tooltip.content.releaseStatus === 'close' ? (
+                  <p className="text-sm text-[var(--color-text-secondary)]">
+                    {tooltip.content.items.join(' ')}
+                  </p>
+                ) : (
+                  <ul className="text-sm space-y-1">
+                    {tooltip.content.items.map((item: string, idx: number) => (
+                      <li key={idx} className="text-[var(--color-text-secondary)]">
+                        • {item}
+                      </li>
+                    ))}
+                  </ul>
+                )
               )}
             </div>
           )}
@@ -594,11 +617,8 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
                 <h2 className="text-2xl font-bold text-cyan-400">{selectedVersion.projectTitle}</h2>
                 <div className="flex items-center gap-2 mt-2">
                   <h3 className="text-xl font-bold">v{selectedVersion.version}</h3>
-                  <span className={`text-xs px-2 py-1 rounded ${selectedVersion.releaseStatus === 'release'
-                    ? 'bg-green-900/30 text-green-400'
-                    : 'bg-orange-900/30 text-orange-400'
-                    }`}>
-                    {selectedVersion.releaseStatus === 'release' ? 'Release' : 'Dev'}
+                  <span className={`text-xs px-2 py-1 rounded ${releaseStatusBadgeClass(selectedVersion.releaseStatus)}`}>
+                    {releaseStatusLabel(selectedVersion.releaseStatus)}
                   </span>
                 </div>
               </div>
@@ -613,13 +633,19 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
             {selectedVersion.items && selectedVersion.items.length > 0 ? (
               <div>
                 <h4 className="text-lg font-bold text-cyan-400 mb-3">Changes</h4>
-                <ul className="space-y-2">
-                  {selectedVersion.items.map((item, idx) => (
-                    <li key={idx} className="text-sm text-[var(--color-text)]">
-                      • {item}
-                    </li>
-                  ))}
-                </ul>
+                {selectedVersion.releaseStatus === 'close' ? (
+                  <p className="text-sm text-[var(--color-text)]">
+                    {selectedVersion.items.join(' ')}
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {selectedVersion.items.map((item, idx) => (
+                      <li key={idx} className="text-sm text-[var(--color-text)]">
+                        • {item}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             ) : (
               <p className="text-sm text-[var(--color-text-secondary)] italic">
@@ -695,21 +721,24 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
                     <div key={milestone.version} className="border border-[var(--color-border)] rounded-lg p-4">
                       <h4 className="font-bold text-lg mb-2 flex items-center gap-2">
                         v{milestone.version}
-                        <span className={`text-xs px-2 py-1 rounded ${milestone.releaseStatus === 'release'
-                          ? 'bg-green-900/30 text-green-400'
-                          : 'bg-orange-900/30 text-orange-400'
-                          }`}>
-                          {milestone.releaseStatus === 'release' ? 'Release' : 'Dev'}
+                        <span className={`text-xs px-2 py-1 rounded ${releaseStatusBadgeClass(milestone.releaseStatus)}`}>
+                          {releaseStatusLabel(milestone.releaseStatus)}
                         </span>
                       </h4>
                       {milestone.items && milestone.items.length > 0 && (
-                        <ul className="space-y-1">
-                          {milestone.items.map((item, idx) => (
-                            <li key={idx} className="text-sm text-[var(--color-text-secondary)]">
-                              • {item}
-                            </li>
-                          ))}
-                        </ul>
+                        milestone.releaseStatus === 'close' ? (
+                          <p className="text-sm text-[var(--color-text-secondary)]">
+                            {milestone.items.join(' ')}
+                          </p>
+                        ) : (
+                          <ul className="space-y-1">
+                            {milestone.items.map((item, idx) => (
+                              <li key={idx} className="text-sm text-[var(--color-text-secondary)]">
+                                • {item}
+                              </li>
+                            ))}
+                          </ul>
+                        )
                       )}
                     </div>
                   ))}

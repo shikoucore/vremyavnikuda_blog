@@ -10,7 +10,7 @@ projectType: "project"
 category: "projects"
 parentProject: "projects"
 status: "active"
-version: "0.1.3"
+version: "0.1.4"
 roadmap:
   - version: "0.1.0"
     releaseStatus: "release"
@@ -19,6 +19,14 @@ roadmap:
   - version: "0.1.3"
     releaseStatus: "release"
   - version: "0.1.4"
+    releaseStatus: "release"
+    items:
+      - "組み込みslurpの安定化とCIの改善"
+      - "CLIモードと設定ノートの修正"
+      - "pkgverを0.1.4に更新"
+      - "slurpをgit submoduleとして追加"
+      - "slurpバイナリを同梱し、AUR対応を追加"
+  - version: "0.1.5"
     releaseStatus: "dev"
 ---
 
