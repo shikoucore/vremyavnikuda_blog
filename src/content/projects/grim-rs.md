@@ -30,9 +30,9 @@ roadmap:
   - version: "0.1.4"
     releaseStatus: "release"
     items:
-      - "Fixed Wayland region capture under fractional scaling"
-      - "Handled fractional scaling without performance regressions"
-      - "Moved geometry tests to integration suite and removed unwraps in tests"
+      - "分数スケーリング下でのWayland領域キャプチャを修正"
+      - "パフォーマンス劣化なしで分数スケーリングに対応"
+      - "ジオメトリテストを統合テストスイートに移動し、テスト内のunwrap()を削除"
   - version: "0.1.5"
     releaseStatus: "dev"
 ---
