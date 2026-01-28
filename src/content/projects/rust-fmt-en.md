@@ -10,7 +10,7 @@ projectType: "project"
 category: "projects"
 parentProject: "projects"
 status: "active"
-version: "0.1.1"
+version: "0.1.2"
 roadmap:
   - version: "0.1.0"
     releaseStatus: "release"
@@ -24,6 +24,10 @@ roadmap:
       - "Auto-detect `Cargo.toml` to set crate root and `--edition`"
       - "Auto-detect `rustfmt.toml` / `.rustfmt.toml` and pass `--config-path`"
       - "Auto-detect `rust-toolchain(.toml)` and set `RUSTUP_TOOLCHAIN` when running rustfmt"
+  - version: "0.1.2"
+    releaseStatus: "release"
+    items:
+      - "Add workspace context cache for faster formatting"
 ---
 
 VS Code extension for formatting Rust code via rustfmt. Simple and fast extension: runs `rustfmt --emit stdout`, automatically detects your `rustfmt.toml` (if present), and works on Linux/Windows/macOS. Supports format-on-save, manual execution from the command palette, and custom parameters such as binary path and additional arguments.
