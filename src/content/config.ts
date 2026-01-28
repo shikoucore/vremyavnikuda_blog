@@ -42,12 +42,12 @@ const projects = defineCollection({
 
 const achievements = defineCollection({
   type: 'content',
-  schema: z.object({
+  schema: ({ image }) => z.object({
     title: z.string(),
     description: z.string(),
     date: z.coerce.date(),
     organization: z.string(),
-    image: z.string(), // Path to certificate image
+    image: image(), // Optimized local image asset
     verificationUrl: z.string().url().optional(),
     lang: z.enum(['ja', 'en']).default('ja'),
   }),

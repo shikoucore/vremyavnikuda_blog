@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const achievements = await getCollection('achievements', ({ data }) => {
@@ -10,6 +11,8 @@ const achievements = await getCollection('achievements', ({ data }) => {
 const sortedAchievements = achievements.sort((a, b) => 
   b.data.date.valueOf() - a.data.date.valueOf()
 );
+
+const achievementsData = sortedAchievements.map(({ data }) => data);
 
 const title = '実績';
 const description = '私の実績とサーティフィケート';
@@ -26,10 +29,12 @@ const description = '私の実績とサーティフィケート';
           data-achievement-index={index}
         >
           <div class="aspect-video bg-[var(--color-bg)] flex items-center justify-center overflow-hidden">
-            <img 
-              src={achievement.data.image} 
+            <Image
+              src={achievement.data.image}
               alt={achievement.data.title}
               class="w-full h-full object-contain"
+              loading={index === 0 ? 'eager' : 'lazy'}
+              decoding="async"
             />
           </div>
           <div class="p-4">
@@ -84,7 +89,11 @@ const description = '私の実績とサーティフィケート';
     }
   </style>
 
-  <script define:vars={{ achievements: sortedAchievements }}>
+  <script type="application/json" id="achievements-data">
+    {JSON.stringify(achievementsData)}
+  </script>
+  <script is:inline>
+    const achievements = JSON.parse(document.getElementById('achievements-data')?.textContent ?? '[]');
     const modal = document.getElementById('achievement-modal');
     const closeBtn = document.getElementById('close-modal');
     const cards = document.querySelectorAll('.achievement-card');
@@ -94,20 +103,20 @@ const description = '私の実績とサーティフィケート';
         const index = parseInt(card.getAttribute('data-achievement-index'));
         const achievement = achievements[index];
         
-        document.getElementById('modal-image').src = achievement.data.image;
-        document.getElementById('modal-image').alt = achievement.data.title;
-        document.getElementById('modal-title').textContent = achievement.data.title;
-        document.getElementById('modal-organization').textContent = achievement.data.organization;
-        document.getElementById('modal-description').textContent = achievement.data.description;
-        document.getElementById('modal-date').textContent = new Date(achievement.data.date).toLocaleDateString('ja-JP', { 
+        document.getElementById('modal-image').src = achievement.image.src;
+        document.getElementById('modal-image').alt = achievement.title;
+        document.getElementById('modal-title').textContent = achievement.title;
+        document.getElementById('modal-organization').textContent = achievement.organization;
+        document.getElementById('modal-description').textContent = achievement.description;
+        document.getElementById('modal-date').textContent = new Date(achievement.date).toLocaleDateString('ja-JP', { 
           year: 'numeric', 
           month: 'long', 
           day: 'numeric' 
         });
         
         const verificationDiv = document.getElementById('modal-verification');
-        if (achievement.data.verificationUrl) {
-          verificationDiv.innerHTML = `<a href="${achievement.data.verificationUrl}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:underline">検証リンク →</a>`;
+        if (achievement.verificationUrl) {
+          verificationDiv.innerHTML = `<a href="${achievement.verificationUrl}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:underline">検証リンク →</a>`;
         } else {
           verificationDiv.innerHTML = '';
         }

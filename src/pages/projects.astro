@@ -3,6 +3,7 @@ import BaseLayout from '@layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 import { getLangFromUrl, useTranslations } from '../i18n/utils';
 import ProjectsRoadmapVisualization from '@components/ProjectsRoadmapVisualization';
+import MobileProjectList from '@components/MobileProjectList';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -34,7 +35,14 @@ const projects = projectsCollection.map(project => ({
     {projects.length === 0 ? (
       <p class="text-[var(--color-text-secondary)]">{t('projects.noProjects')}</p>
     ) : (
-      <ProjectsRoadmapVisualization projects={projects} client:load />
+      <>
+        <div class="md:hidden">
+          <MobileProjectList projects={projects} client:media="(max-width: 767px)" />
+        </div>
+        <div class="hidden md:block">
+          <ProjectsRoadmapVisualization projects={projects} client:media="(min-width: 768px)" />
+        </div>
+      </>
     )}
   </div>
 </BaseLayout>

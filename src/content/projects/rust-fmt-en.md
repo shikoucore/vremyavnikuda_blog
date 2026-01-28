@@ -8,7 +8,7 @@ featured: true
 lang: en
 projectType: "project"
 category: "projects"
-parentProject: "projects"
+parentProject: "Shikou Core"
 status: "active"
 version: "0.1.2"
 roadmap:

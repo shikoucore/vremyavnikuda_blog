@@ -1,25 +1,5 @@
 import { useState, useMemo } from 'react';
-
-type ReleaseStatus = 'release' | 'dev' | 'close';
-
-interface Project {
-  id: string;
-  title: string;
-  description: string;
-  version?: string;
-  status: string;
-  tags: string[];
-  github?: string;
-  link?: string;
-  projectType?: 'category' | 'project' | 'contribution';
-  category?: 'projects' | 'contributing';
-  parentProject?: string;
-  roadmap?: Array<{
-    version: string;
-    releaseStatus: ReleaseStatus;
-    items?: string[];
-  }>;
-}
+import type { Project, ReleaseStatus } from './projects/types';
 
 interface Props {
   projects: Project[];

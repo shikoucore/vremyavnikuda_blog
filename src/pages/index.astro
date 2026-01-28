@@ -2,7 +2,6 @@
 import BaseLayout from '@layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 import { getLangFromUrl, useTranslations, getLocalizedPath } from '../i18n/utils';
-import SubscribeForm from '@components/SubscribeForm.astro';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -22,22 +21,22 @@ const allPosts = (await getCollection('blog'))
       <p class="text-xl text-[var(--color-text-secondary)] mb-8 max-w-2xl">
         {t('home.intro')}
       </p>
-      <div class="flex gap-4">
+      <div class="flex flex-col sm:flex-row gap-4">
         <a 
           href={getLocalizedPath('/blog', lang)}
-          class="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          class="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors w-full sm:w-auto text-center"
         >
           {t('home.readBlog')}
         </a>
         <a 
           href={getLocalizedPath('/projects', lang)}
-          class="px-6 py-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors"
+          class="px-6 py-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors w-full sm:w-auto text-center"
         >
           {t('home.viewProjects')}
         </a>
         <a 
           href={getLocalizedPath('/achievements', lang)}
-          class="px-6 py-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors"
+          class="px-6 py-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors w-full sm:w-auto text-center"
         >
           {t('home.viewAchievements')}
         </a>

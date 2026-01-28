@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
-import SubscribeForm from '@components/SubscribeForm.astro';
 
 const lang = 'en';
 
@@ -20,24 +19,25 @@ const allPosts = (await getCollection('blog'))
       <p class="text-xl text-[var(--color-text-secondary)] mb-8 max-w-2xl">
         I'm a Systems Software Developer specializing in building components that ensure the stability and reliability of large-scale infrastructure. This is my personal space where I share knowledge, opinions, and information that I find interesting and worth exploring.
       </p>
-      <div class="flex gap-4">
+      <div class="flex flex-col sm:flex-row gap-4">
         <a 
           href="/en/blog" 
-          class="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          class="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors w-full sm:w-auto text-center"
         >
           Read the blog
         </a>
         <a 
           href="/en/projects" 
-          class="px-6 py-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors"
+          class="px-6 py-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors w-full sm:w-auto text-center"
         >
           View projects
         </a>
         <a 
           href="/en/achievements" 
-          class="px-6 py-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors"
+          class="px-6 py-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors w-full sm:w-auto text-center"
         >
-          View achievements
+          <span class="sm:hidden">Achievements</span>
+          <span class="hidden sm:inline">View achievements</span>
         </a>
       </div>
     </section>

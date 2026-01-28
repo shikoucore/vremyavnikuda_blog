@@ -4,29 +4,7 @@ import { select } from 'd3-selection';
 
 import { zoom, zoomIdentity } from 'd3-zoom';
 import { useDeviceType } from '../hooks/useMediaQuery';
-import MobileProjectList from './MobileProjectList';
-
-type ReleaseStatus = 'release' | 'dev' | 'close';
-
-interface Project {
-  id: string;
-  title: string;
-  description: string;
-  version?: string;
-  status: string;
-  tags: string[];
-  github?: string;
-  link?: string;
-  projectType?: 'category' | 'project' | 'contribution';
-  category?: 'projects' | 'contributing';
-  parentProject?: string;
-  linkedProjects?: string[];
-  roadmap?: Array<{
-    version: string;
-    releaseStatus: ReleaseStatus;
-    items?: string[];
-  }>;
-}
+import type { Project, ReleaseStatus } from './projects/types';
 
 interface Props {
   projects: Project[];
@@ -75,10 +53,6 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
     if (status === 'close') return '#ef4444';
     return '#f59e0b';
   };
-
-  if (deviceType === 'mobile') {
-    return <MobileProjectList projects={projects} />;
-  }
 
   useEffect(() => {
     if (!svgRef.current || !projects || projects.length === 0) return;
@@ -136,6 +110,12 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
 
     const nodeRadius = deviceType === 'tablet' ? 10 : 12;
     const touchTargetSize = 44;
+    const rectWidth = deviceType === 'tablet' ? 120 : 160;
+    const rectHeight = deviceType === 'tablet' ? 36 : 40;
+    const nodeSpacing = {
+      vertical: rectHeight + (deviceType === 'tablet' ? 24 : 28),
+      horizontal: rectWidth + (deviceType === 'tablet' ? 90 : 110),
+    };
 
     const svg = select(svgRef.current)
       .attr('width', width)
@@ -144,29 +124,25 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       .style('font-size', '13px');
 
     const g = svg.append('g');
-    const maxTreeWidth = deviceType === 'tablet' ? 900 : 1100;
-    const maxTreeHeight = deviceType === 'tablet' ? 600 : 800;
-    const treeWidth = Math.min(width - margin.left - margin.right, maxTreeWidth);
-    const treeHeight = Math.min(height - margin.top - margin.bottom, maxTreeHeight);
     
     const treeLayout = tree<TreeNode>()
-      .size([treeHeight, treeWidth])
+      .nodeSize([nodeSpacing.vertical, nodeSpacing.horizontal])
       .separation((a, b) => {
         const aIsCategory = a.data.type === 'project' && a.depth === 1;
         const bIsCategory = b.data.type === 'project' && b.depth === 1;
         const bothAreCategories = aIsCategory && bIsCategory;
         if (bothAreCategories && a.parent === b.parent) {
-          return deviceType === 'tablet' ? 8 : 10;
+          return deviceType === 'tablet' ? 2 : 2.4;
         }
 
         const aIsVersion = a.data.type === 'version';
         const bIsVersion = b.data.type === 'version';
         if (aIsVersion || bIsVersion) {
-          return deviceType === 'tablet' ? 1.5 : 2;
+          return deviceType === 'tablet' ? 1.25 : 1.4;
         }
 
-        const baseSeparation = deviceType === 'tablet' ? 2 : 2.5;
-        const crossSeparation = deviceType === 'tablet' ? 3 : 4;
+        const baseSeparation = deviceType === 'tablet' ? 1.35 : 1.5;
+        const crossSeparation = deviceType === 'tablet' ? 1.7 : 2.0;
         return a.parent === b.parent ? baseSeparation : crossSeparation;
       });
 
@@ -256,8 +232,6 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       archived: '#6b7280',
     };
 
-    const rectWidth = deviceType === 'tablet' ? 120 : 160;
-    const rectHeight = deviceType === 'tablet' ? 36 : 40;
     const versionCircleRadius = nodeRadius - (deviceType === 'tablet' ? 3 : 4);
     const rootCircleRadius = nodeRadius;
     const getNodeEdgeOffset = (nodeType: string) => {
@@ -510,6 +484,10 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       .attr('fill', d => {
         if (d.data.type === 'root') return '#06b6d4';
         if (d.data.type === 'project') return '#f9fafb';
+        if (d.data.type === 'version') {
+          const versionData = d.data.data as { releaseStatus: ReleaseStatus };
+          return releaseStatusColor(versionData.releaseStatus);
+        }
         return 'var(--color-text)';
       })
       .attr('font-weight', d => (d.data.type === 'root' ? 'bold' : 'normal'))
