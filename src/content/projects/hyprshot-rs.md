@@ -10,7 +10,7 @@ projectType: "project"
 category: "projects"
 parentProject: "Shikou Core"
 status: "active"
-version: "0.1.4"
+version: "0.1.5"
 roadmap:
   - version: "0.1.0"
     releaseStatus: "release"
@@ -27,7 +27,9 @@ roadmap:
       - "slurpをgit submoduleとして追加"
       - "slurpバイナリを同梱し、AUR対応を追加"
   - version: "0.1.5"
-    releaseStatus: "dev"
+    releaseStatus: "release"
+    items:
+      - "CLI出力名: -mでOUTPUT_NAMEを許可し、--notif-timeoutのヘルプフラグを修正"
 ---
 
 マウスを使用してHyprlandでスクリーンショットを撮影するRustユーティリティ。モニター全体（出力）、アクティブなモニター、選択した領域、選択したウィンドウ、アクティブなウィンドウのキャプチャをサポートしています。スクリーンショットは選択したディレクトリに保存するか、クリップボードにコピー（PNG形式）できます。パス、ホットキー、通知などを設定するためのTOMLベースの設定ファイル（~/.config/hyprshot-rs/config.toml）が含まれています。CLIツールとして、また統合用のクレートとして利用可能です。

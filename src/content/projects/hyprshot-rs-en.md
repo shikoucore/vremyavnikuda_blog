@@ -10,7 +10,7 @@ projectType: "project"
 category: "projects"
 parentProject: "Shikou Core"
 status: "active"
-version: "0.1.4"
+version: "0.1.5"
 roadmap:
   - version: "0.1.0"
     releaseStatus: "release"
@@ -27,7 +27,9 @@ roadmap:
       - "Added slurp as a git submodule"
       - "Embedded slurp binary and added AUR support"
   - version: "0.1.5"
-    releaseStatus: "dev"
+    releaseStatus: "release"
+    items:
+      - "CLI output names: allow OUTPUT_NAME in -m and correct help flag for --notif-timeout"
 ---
 
 A Rust utility for taking screenshots in Hyprland using your mouse. It supports capturing the entire monitor (output), the active monitor, selected regions, selected windows, and the active window. Screenshots can be saved to a chosen directory or copied to the clipboard (PNG format). It includes a TOML-based config (~/.config/hyprshot-rs/config.toml) for paths, hotkeys, notifications, and more. Available as a CLI tool and as a crate for integration.
