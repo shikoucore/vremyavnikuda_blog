@@ -20,12 +20,12 @@ const description = '私の実績とサーティフィケート';
 
 <BaseLayout title={title} description={description}>
   <div class="max-w-6xl mx-auto px-4 py-8">
-    <h1 class="text-4xl font-bold text-cyan-400 mb-8">{title}</h1>
+    <h1 class="text-4xl font-bold text-primary-400 mb-8">{title}</h1>
     
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {sortedAchievements.map((achievement, index) => (
         <div 
-          class="achievement-card bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-lg overflow-hidden hover:border-cyan-400 transition-all cursor-pointer"
+          class="achievement-card bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-lg overflow-hidden hover:border-primary-400 transition-all cursor-pointer"
           data-achievement-index={index}
         >
           <div class="aspect-video bg-[var(--color-bg)] flex items-center justify-center overflow-hidden">
@@ -38,7 +38,7 @@ const description = '私の実績とサーティフィケート';
             />
           </div>
           <div class="p-4">
-            <h2 class="text-lg font-bold text-cyan-400">{achievement.data.title}</h2>
+            <h2 class="text-lg font-bold text-primary-400">{achievement.data.title}</h2>
           </div>
         </div>
       ))}
@@ -50,12 +50,12 @@ const description = '私の実績とサーティフィケート';
     <div class="relative max-w-6xl max-h-[90vh] flex flex-col">
       <button
         id="close-modal"
-        class="absolute -top-10 right-0 text-white hover:text-cyan-400 text-3xl font-bold transition-colors z-10"
+        class="absolute -top-10 right-0 text-white hover:text-primary-400 text-3xl font-bold transition-colors z-10"
         aria-label="Close modal"
       >
         ✕
       </button>
-      <div class="bg-[var(--color-bg)] border border-cyan-400 rounded-lg overflow-hidden flex flex-col">
+      <div class="bg-[var(--color-bg)] border border-primary-400 rounded-lg overflow-hidden flex flex-col">
         <div class="p-4 flex items-center justify-center bg-[var(--color-bg)]">
           <img 
             id="modal-image"
@@ -65,7 +65,7 @@ const description = '私の実績とサーティフィケート';
           />
         </div>
         <div class="p-3 border-t border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
-          <h2 id="modal-title" class="text-lg font-bold text-cyan-400 mb-1"></h2>
+          <h2 id="modal-title" class="text-lg font-bold text-primary-400 mb-1"></h2>
           <p id="modal-organization" class="text-xs text-[var(--color-text-secondary)] mb-1"></p>
           <p id="modal-description" class="text-sm text-[var(--color-text)] mb-1"></p>
           <p id="modal-date" class="text-xs text-[var(--color-text-secondary)]"></p>
@@ -116,7 +116,7 @@ const description = '私の実績とサーティフィケート';
         
         const verificationDiv = document.getElementById('modal-verification');
         if (achievement.verificationUrl) {
-          verificationDiv.innerHTML = `<a href="${achievement.verificationUrl}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:underline">検証リンク →</a>`;
+          verificationDiv.innerHTML = `<a href="${achievement.verificationUrl}" target="_blank" rel="noopener noreferrer" class="text-primary-400 hover:underline">検証リンク →</a>`;
         } else {
           verificationDiv.innerHTML = '';
         }

@@ -166,7 +166,7 @@ export default function ProjectRoadmapTree({ roadmap, currentVersion, projectTit
   return (
     <div ref={containerRef} className="roadmap-tree-container mt-8 overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]">
       <div className="p-4 border-b border-[var(--color-border)]">
-        <h3 className="text-lg font-semibold text-cyan-400 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-primary-400 flex items-center gap-2">
           🌳 Roadmap Tree
         </h3>
         <p className="text-xs text-[var(--color-text-secondary)] mt-1">

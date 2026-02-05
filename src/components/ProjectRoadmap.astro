@@ -24,7 +24,7 @@ const statusIcons = {
 
 const statusColors = {
   'completed': 'text-green-400',
-  'in-progress': 'text-cyan-400',
+  'in-progress': 'text-primary-400',
   'planned': 'text-gray-500',
 };
 ---
@@ -39,7 +39,7 @@ const statusColors = {
 ) : (
 <div class="roadmap-container mt-8">
   <h3 class="text-xl font-semibold mb-6 flex items-center gap-2">
-    <span class="text-cyan-400">→</span>
+    <span class="text-primary-400">→</span>
     Roadmap
     {currentVersion && (
       <span class="text-sm text-[var(--color-text-secondary)]">
@@ -54,7 +54,7 @@ const statusColors = {
         {/* Timeline dot */}
         <div class={`absolute -left-[33px] w-4 h-4 rounded-full border-2 border-[var(--color-border)] ${
           milestone.status === 'completed' ? 'bg-green-400' :
-          milestone.status === 'in-progress' ? 'bg-cyan-400 animate-pulse' :
+          milestone.status === 'in-progress' ? 'bg-primary-400 animate-pulse' :
           'bg-[var(--color-bg)]'
         }`}></div>
 
@@ -65,7 +65,7 @@ const statusColors = {
           </span>
           <span class={`text-xs px-2 py-1 rounded ${
             milestone.status === 'completed' ? 'bg-green-900/30 text-green-400' :
-            milestone.status === 'in-progress' ? 'bg-cyan-900/30 text-cyan-400' :
+            milestone.status === 'in-progress' ? 'bg-primary-900/30 text-primary-400' :
             'bg-gray-800 text-gray-500'
           }`}>
             {milestone.status === 'completed' ? 'Released' :
@@ -78,7 +78,7 @@ const statusColors = {
         <ul class="space-y-2 text-sm">
           {milestone.items.map((item) => (
             <li class="flex items-start gap-2 text-[var(--color-text-secondary)]">
-              <span class="text-cyan-400 mt-0.5">·</span>
+              <span class="text-primary-400 mt-0.5">·</span>
               <span>{item}</span>
             </li>
           ))}

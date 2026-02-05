@@ -525,7 +525,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
       {/* Tooltip */}
       {tooltip.visible && (
         <div
-          className="fixed z-50 bg-[var(--color-bg-secondary)] border border-cyan-400 rounded-lg p-4 shadow-xl max-w-sm"
+          className="fixed z-50 bg-[var(--color-bg-secondary)] border border-primary-400 rounded-lg p-4 shadow-xl max-w-sm"
           style={{
             left: `${tooltip.x + 20}px`,
             top: `${tooltip.y - 20}px`,
@@ -534,7 +534,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
         >
           {tooltip.type === 'project' ? (
             <div>
-              <h3 className="font-bold text-cyan-400 mb-2">{tooltip.content.title}</h3>
+              <h3 className="font-bold text-primary-400 mb-2">{tooltip.content.title}</h3>
               <p className="text-sm text-[var(--color-text-secondary)] mb-2">
                 {tooltip.content.description}
               </p>
@@ -546,7 +546,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
                 ))}
               </div>
               {tooltip.content.version && (
-                <p className="text-xs text-cyan-400">v{tooltip.content.version}</p>
+                <p className="text-xs text-primary-400">v{tooltip.content.version}</p>
               )}
               <p className="text-xs text-[var(--color-text-secondary)] mt-2 italic">
                 Click to see full details
@@ -555,7 +555,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
           ) : (
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <h4 className="font-bold text-cyan-400">v{tooltip.content.version}</h4>
+                <h4 className="font-bold text-primary-400">v{tooltip.content.version}</h4>
                 <span className={`text-xs px-2 py-1 rounded ${releaseStatusBadgeClass(tooltip.content.releaseStatus)}`}>
                   {releaseStatusLabel(tooltip.content.releaseStatus)}
                 </span>
@@ -587,12 +587,12 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
           onClick={() => setSelectedVersion(null)}
         >
           <div
-            className="bg-[var(--color-bg)] border border-cyan-400 rounded-lg p-6 max-w-xl max-h-[80vh] overflow-y-auto m-4"
+            className="bg-[var(--color-bg)] border border-primary-400 rounded-lg p-6 max-w-xl max-h-[80vh] overflow-y-auto m-4"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-cyan-400">{selectedVersion.projectTitle}</h2>
+                <h2 className="text-2xl font-bold text-primary-400">{selectedVersion.projectTitle}</h2>
                 <div className="flex items-center gap-2 mt-2">
                   <h3 className="text-xl font-bold">v{selectedVersion.version}</h3>
                   <span className={`text-xs px-2 py-1 rounded ${releaseStatusBadgeClass(selectedVersion.releaseStatus)}`}>
@@ -602,7 +602,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
               </div>
               <button
                 onClick={() => setSelectedVersion(null)}
-                className="text-[var(--color-text-secondary)] hover:text-cyan-400 text-2xl"
+                className="text-[var(--color-text-secondary)] hover:text-primary-400 text-2xl"
               >
                 ✕
               </button>
@@ -610,7 +610,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
 
             {selectedVersion.items && selectedVersion.items.length > 0 ? (
               <div>
-                <h4 className="text-lg font-bold text-cyan-400 mb-3">Changes</h4>
+                <h4 className="text-lg font-bold text-primary-400 mb-3">Changes</h4>
                 {selectedVersion.releaseStatus === 'close' ? (
                   <p className="text-sm text-[var(--color-text)]">
                     {selectedVersion.items.join(' ')}
@@ -641,14 +641,14 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
           onClick={() => setSelectedProject(null)}
         >
           <div
-            className="bg-[var(--color-bg)] border border-cyan-400 rounded-lg p-6 max-w-2xl max-h-[80vh] overflow-y-auto m-4"
+            className="bg-[var(--color-bg)] border border-primary-400 rounded-lg p-6 max-w-2xl max-h-[80vh] overflow-y-auto m-4"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-start mb-4">
-              <h2 className="text-3xl font-bold text-cyan-400">{selectedProject.title}</h2>
+              <h2 className="text-3xl font-bold text-primary-400">{selectedProject.title}</h2>
               <button
                 onClick={() => setSelectedProject(null)}
-                className="text-[var(--color-text-secondary)] hover:text-cyan-400 text-2xl"
+                className="text-[var(--color-text-secondary)] hover:text-primary-400 text-2xl"
               >
                 ✕
               </button>
@@ -665,7 +665,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
             </div>
 
             {selectedProject.version && (
-              <p className="text-sm text-cyan-400 mb-4">Current Version: v{selectedProject.version}</p>
+              <p className="text-sm text-primary-400 mb-4">Current Version: v{selectedProject.version}</p>
             )}
 
             <div className="flex gap-4 mb-6">
@@ -674,7 +674,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
                   href={selectedProject.github}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-cyan-400 hover:underline"
+                  className="text-primary-400 hover:underline"
                 >
                   GitHub →
                 </a>
@@ -684,7 +684,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
                   href={selectedProject.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-cyan-400 hover:underline"
+                  className="text-primary-400 hover:underline"
                 >
                   Visit →
                 </a>
@@ -693,7 +693,7 @@ export default function ProjectsRoadmapVisualization({ projects }: Props) {
 
             {selectedProject.roadmap && selectedProject.roadmap.length > 0 && (
               <div>
-                <h3 className="text-xl font-bold text-cyan-400 mb-4">Roadmap</h3>
+                <h3 className="text-xl font-bold text-primary-400 mb-4">Roadmap</h3>
                 <div className="space-y-4">
                   {selectedProject.roadmap.map(milestone => (
                     <div key={milestone.version} className="border border-[var(--color-border)] rounded-lg p-4">

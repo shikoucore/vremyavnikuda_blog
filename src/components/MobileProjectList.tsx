@@ -137,7 +137,7 @@ export default function MobileProjectList({ projects }: Props) {
               e.stopPropagation();
               setSelectedProject(project);
             }}
-            className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-cyan-400 hover:bg-cyan-400/10 rounded transition-colors ml-2"
+            className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-primary-400 hover:bg-primary-400/10 rounded transition-colors ml-2"
             aria-label="View details"
           >
             ⓘ
@@ -201,7 +201,7 @@ export default function MobileProjectList({ projects }: Props) {
     <div className="mobile-project-list p-4">
       {/* Header */}
       <div className="mb-4 p-4 bg-[var(--color-bg-secondary)] rounded-lg">
-        <h2 className="text-lg font-bold text-cyan-400 mb-1">Projects</h2>
+        <h2 className="text-lg font-bold text-primary-400 mb-1">Projects</h2>
         <p className="text-sm text-[var(--color-text-secondary)]">
           Tap to expand projects and view versions
         </p>
@@ -219,14 +219,14 @@ export default function MobileProjectList({ projects }: Props) {
           onClick={() => setSelectedProject(null)}
         >
           <div
-            className="bg-[var(--color-bg)] border border-cyan-400 rounded-lg p-6 max-w-lg max-h-[80vh] overflow-y-auto w-full"
+            className="bg-[var(--color-bg)] border border-primary-400 rounded-lg p-6 max-w-lg max-h-[80vh] overflow-y-auto w-full"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-start mb-4">
-              <h2 className="text-xl font-bold text-cyan-400 pr-8">{selectedProject.title}</h2>
+              <h2 className="text-xl font-bold text-primary-400 pr-8">{selectedProject.title}</h2>
               <button
                 onClick={() => setSelectedProject(null)}
-                className="text-[var(--color-text-secondary)] hover:text-cyan-400 text-2xl flex-shrink-0"
+                className="text-[var(--color-text-secondary)] hover:text-primary-400 text-2xl flex-shrink-0"
               >
                 ✕
               </button>
@@ -243,7 +243,7 @@ export default function MobileProjectList({ projects }: Props) {
             </div>
 
             {selectedProject.version && (
-              <p className="text-sm text-cyan-400 mb-4">Current Version: v{selectedProject.version}</p>
+              <p className="text-sm text-primary-400 mb-4">Current Version: v{selectedProject.version}</p>
             )}
 
             <div className="flex flex-wrap gap-3 mb-6">
@@ -252,7 +252,7 @@ export default function MobileProjectList({ projects }: Props) {
                   href={selectedProject.github}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-cyan-400 hover:underline text-sm"
+                  className="text-primary-400 hover:underline text-sm"
                 >
                   GitHub →
                 </a>
@@ -262,7 +262,7 @@ export default function MobileProjectList({ projects }: Props) {
                   href={selectedProject.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-cyan-400 hover:underline text-sm"
+                  className="text-primary-400 hover:underline text-sm"
                 >
                   Visit →
                 </a>
@@ -271,7 +271,7 @@ export default function MobileProjectList({ projects }: Props) {
 
             {selectedProject.roadmap && selectedProject.roadmap.length > 0 && (
               <div>
-                <h3 className="text-lg font-bold text-cyan-400 mb-3">Roadmap</h3>
+                <h3 className="text-lg font-bold text-primary-400 mb-3">Roadmap</h3>
                 <div className="space-y-3">
                   {selectedProject.roadmap.map(milestone => (
                     <div key={milestone.version} className="border border-[var(--color-border)] rounded-lg p-3">
@@ -312,12 +312,12 @@ export default function MobileProjectList({ projects }: Props) {
           onClick={() => setSelectedVersion(null)}
         >
           <div
-            className="bg-[var(--color-bg)] border border-cyan-400 rounded-lg p-6 max-w-lg max-h-[80vh] overflow-y-auto w-full"
+            className="bg-[var(--color-bg)] border border-primary-400 rounded-lg p-6 max-w-lg max-h-[80vh] overflow-y-auto w-full"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-xl font-bold text-cyan-400">{selectedVersion.projectTitle}</h2>
+                <h2 className="text-xl font-bold text-primary-400">{selectedVersion.projectTitle}</h2>
                 <div className="flex items-center gap-2 mt-2">
                   <h3 className="text-lg font-bold">v{selectedVersion.version}</h3>
                   <span className={`text-xs px-2 py-1 rounded ${releaseStatusStyles[selectedVersion.releaseStatus].badge}`}>
@@ -327,7 +327,7 @@ export default function MobileProjectList({ projects }: Props) {
               </div>
               <button
                 onClick={() => setSelectedVersion(null)}
-                className="text-[var(--color-text-secondary)] hover:text-cyan-400 text-2xl flex-shrink-0"
+                className="text-[var(--color-text-secondary)] hover:text-primary-400 text-2xl flex-shrink-0"
               >
                 ✕
               </button>
@@ -335,7 +335,7 @@ export default function MobileProjectList({ projects }: Props) {
 
             {selectedVersion.items && selectedVersion.items.length > 0 ? (
               <div>
-                <h4 className="text-base font-bold text-cyan-400 mb-3">Changes</h4>
+                <h4 className="text-base font-bold text-primary-400 mb-3">Changes</h4>
                 {selectedVersion.releaseStatus === 'close' ? (
                   <p className="text-sm text-[var(--color-text)]">
                     {selectedVersion.items.join(' ')}

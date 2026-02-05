@@ -46,7 +46,7 @@ export const ui = {
     'about.techStack': '技術スタック',
     'about.techStackText': 'C、C++、Rust、そしてLinuxエコシステム（特にArch Linux）を使用し、パフォーマンス、信頼性、ハードウェアに近いシステムに焦点を当てています。システムプログラミングにおける新しいツール、アーキテクチャ、ベストプラクティスを常に探求しています。',
     'about.contact': '連絡先',
-    'about.contactText1': 'お気軽に',
+    'about.contactText1': 'お気軽にご連絡ください：',
     'about.contactText2': 'でご連絡ください。または',
     'about.contactText3': 'に登録して最新情報を入手してください。',
     'about.github': 'GitHub',
@@ -152,7 +152,7 @@ export const ui = {
     'pagination.previous': '← Previous',
     'pagination.next': 'Next →',
     'pagination.page': 'Page',
-    'pagination.of': 'of',
+    'pagination.of': '/',
   },
 } as const;
 

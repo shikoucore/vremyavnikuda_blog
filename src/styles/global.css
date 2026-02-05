@@ -88,7 +88,7 @@
   }
 
   .prose p {
-    @apply text-[var(--color-text-secondary)] mb-4 leading-relaxed text-justify;
+    @apply text-[var(--color-text-secondary)] mb-4 leading-relaxed;
   }
 
   .prose ul,
