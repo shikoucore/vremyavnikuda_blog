@@ -10,7 +10,7 @@ projectType: "project"
 category: "projects"
 parentProject: "Shikou Core"
 status: "active"
-version: "0.1.2"
+version: "0.1.3"
 roadmap:
   - version: "0.1.0"
     releaseStatus: "release"
@@ -28,6 +28,12 @@ roadmap:
     releaseStatus: "release"
     items:
       - "高速化のためのワークスペースコンテキストキャッシュを追加"
+  - version: "0.1.3"
+    releaseStatus: "release"
+    items:
+      - "rust-fmt をデフォルトフォーマッタに設定するクイックコマンドを追加（Global / Workspace のスコープ選択）"
+      - "Rust が rust-fmt をデフォルトフォーマッタとして使っていない場合のスマートなプロンプト"
+      - "大規模プロジェクトでのワークスペースフォーマットを高速化"
 ---
 
 rustfmtを使用したRustコードのフォーマットを行うVS Code拡張機能。シンプルで高速な拡張機能：`rustfmt --emit stdout`を実行し、`rustfmt.toml`（存在する場合）を自動検出し、Linux/Windows/macOSで動作します。保存時の自動フォーマット、コマンドパレットからの手動実行、バイナリパスや追加引数などのカスタムパラメータをサポートしています。
