@@ -43,6 +43,25 @@
 }
 
 @layer components {
+  .glass-header {
+    background: linear-gradient(145deg, rgba(10, 14, 26, 0.52), rgba(8, 47, 73, 0.22));
+    box-shadow:
+      0 12px 30px rgba(2, 6, 23, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px) saturate(135%);
+    -webkit-backdrop-filter: blur(16px) saturate(135%);
+  }
+
+  .glass-toolbar {
+    border: 1px solid rgba(34, 211, 238, 0.24);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.4), rgba(8, 47, 73, 0.18));
+    box-shadow:
+      0 18px 40px rgba(2, 6, 23, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(16px) saturate(130%);
+    -webkit-backdrop-filter: blur(16px) saturate(130%);
+  }
+
   .glass-overlay {
     background: rgba(2, 6, 23, 0.42);
     backdrop-filter: blur(14px) saturate(125%);

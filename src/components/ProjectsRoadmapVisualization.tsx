@@ -655,7 +655,7 @@ export default function ProjectsRoadmapVisualization({ projects, lang = 'en' }: 
 
   return (
     <div className="relative">
-      <div className="mb-4 rounded-2xl border border-cyan-300/20 bg-[linear-gradient(135deg,rgba(15,23,42,0.56),rgba(8,47,73,0.24))] p-4 shadow-[0_20px_60px_rgba(2,6,23,0.55)] backdrop-blur-xl">
+      <div className="glass-toolbar relative z-20 mb-4 rounded-2xl p-4">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
           <div className="flex-1">
             <input
@@ -813,8 +813,8 @@ export default function ProjectsRoadmapVisualization({ projects, lang = 'en' }: 
         </div>
       )}
 
-      <div ref={containerRef} className="roadmap-visualization overflow-hidden bg-[var(--color-bg)]">
-        <svg ref={svgRef} className="w-full" />
+      <div ref={containerRef} className="roadmap-visualization relative z-0 overflow-visible bg-[var(--color-bg)]">
+        <svg ref={svgRef} className="w-full overflow-visible" />
       </div>
 
       {tooltip.visible && tooltip.content && (

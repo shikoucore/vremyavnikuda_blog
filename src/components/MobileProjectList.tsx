@@ -280,7 +280,7 @@ export default function MobileProjectList({ projects, lang = 'en' }: Props) {
 
   return (
     <div className="mobile-project-list p-4">
-      <div className="mb-4 rounded-2xl border border-cyan-300/20 bg-[linear-gradient(135deg,rgba(15,23,42,0.56),rgba(8,47,73,0.24))] p-4 shadow-[0_20px_60px_rgba(2,6,23,0.55)] backdrop-blur-xl">
+      <div className="glass-toolbar mb-4 rounded-2xl p-4">
         <h2 className="mb-1 text-lg font-bold text-primary-400">{t.projectsNavigator}</h2>
         <p className="text-sm text-[var(--color-text-secondary)]">
           {t.searchHint}
