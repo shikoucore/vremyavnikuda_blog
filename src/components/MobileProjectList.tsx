@@ -398,11 +398,11 @@ export default function MobileProjectList({ projects, lang = 'en' }: Props) {
 
       {selectedProject && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4"
+          className="glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={() => setSelectedProject(null)}
         >
           <div
-            className="max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-lg border border-primary-400 bg-[var(--color-bg)] p-6"
+            className="glass-panel ui-scrollbar max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-2xl p-6"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-4 flex items-start justify-between">
@@ -532,11 +532,11 @@ export default function MobileProjectList({ projects, lang = 'en' }: Props) {
 
       {selectedVersion && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4"
+          className="glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={() => setSelectedVersion(null)}
         >
           <div
-            className="max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-lg border border-primary-400 bg-[var(--color-bg)] p-6"
+            className="glass-panel ui-scrollbar max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-2xl p-6"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-4 flex items-start justify-between">

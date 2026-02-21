@@ -885,11 +885,11 @@ export default function ProjectsRoadmapVisualization({ projects, lang = 'en' }: 
 
       {selectedVersion && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
+          className="glass-overlay fixed inset-0 z-50 flex items-center justify-center"
           onClick={() => setSelectedVersion(null)}
         >
           <div
-            className="ui-scrollbar m-4 max-h-[80vh] max-w-xl overflow-y-auto rounded-lg border border-primary-400 bg-[var(--color-bg)] p-6"
+            className="glass-panel ui-scrollbar m-4 max-h-[80vh] max-w-xl overflow-y-auto rounded-2xl p-6"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-4 flex items-start justify-between">
@@ -940,11 +940,11 @@ export default function ProjectsRoadmapVisualization({ projects, lang = 'en' }: 
 
       {selectedProject && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
+          className="glass-overlay fixed inset-0 z-50 flex items-center justify-center"
           onClick={() => setSelectedProject(null)}
         >
           <div
-            className="ui-scrollbar m-4 max-h-[80vh] max-w-2xl overflow-y-auto rounded-lg border border-primary-400 bg-[var(--color-bg)] p-6"
+            className="glass-panel ui-scrollbar m-4 max-h-[80vh] max-w-2xl overflow-y-auto rounded-2xl p-6"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-4 flex items-start justify-between gap-4">
