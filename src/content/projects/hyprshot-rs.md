@@ -10,7 +10,7 @@ projectType: "project"
 category: "projects"
 parentProject: "Shikou Core"
 status: "active"
-version: "0.1.6"
+version: "0.1.7"
 roadmap:
   - version: "0.1.0"
     releaseStatus: "release"
@@ -55,6 +55,16 @@ roadmap:
       - "修正: ビルド信頼性: Slurpの埋め込み失敗でビルドが壊れないよう修正"
       - "修正: 埋め込みslurpの安全性: ロックと整合性チェック付きのアトミック更新"
       - "修正: ジオメトリ処理: モード間でのキャプチャ処理をより一貫化"
+  - version: "0.1.7"
+    releaseStatus: "release"
+    items:
+      - "Selectorバックエンド: 既定の選択フローをslurp-rs APIベースに変更"
+      - "選択エラー: 領域選択キャンセル時のガイダンスを型付きselectorエラーに統一"
+      - "ジオメトリ変換: キャプチャ経路を明示的な Geometry -> grim_rs::Box 変換に変更"
+      - "実行時要件: 選択処理が外部slurpバイナリに依存しなくなった"
+      - "参照: slurp-rsリポジトリは https://github.com/vremyavnikuda/slurp-rs"
 ---
 
 マウスを使用してHyprlandでスクリーンショットを撮影するRustユーティリティ。モニター全体（出力）、アクティブなモニター、選択した領域、選択したウィンドウ、アクティブなウィンドウのキャプチャをサポートしています。スクリーンショットは選択したディレクトリに保存するか、クリップボードにコピー（PNG形式）できます。パス、ホットキー、通知などを設定するためのTOMLベースの設定ファイル（~/.config/hyprshot-rs/config.toml）が含まれています。CLIツールとして、また統合用のクレートとして利用可能です。
+
+v0.1.7以降、既定の選択バックエンドはslurp-rs API統合で動作し、外部 `slurp` バイナリは不要になりました。

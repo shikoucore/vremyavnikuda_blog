@@ -12,7 +12,6 @@ const projectsCollection = (await getCollection('projects'))
   .filter(project => project.data.lang === lang)
   .sort((a, b) => (b.data.featured ? 1 : 0) - (a.data.featured ? 1 : 0));
 
-// Transform projects for visualization
 const projects = projectsCollection.map(project => ({
   id: project.id,
   title: project.data.title,
@@ -37,10 +36,10 @@ const projects = projectsCollection.map(project => ({
     ) : (
       <>
         <div class="md:hidden">
-          <MobileProjectList projects={projects} client:media="(max-width: 767px)" />
+          <MobileProjectList projects={projects} lang={lang} client:media="(max-width: 767px)" />
         </div>
         <div class="hidden md:block">
-          <ProjectsRoadmapVisualization projects={projects} client:media="(min-width: 768px)" />
+          <ProjectsRoadmapVisualization projects={projects} lang={lang} client:media="(min-width: 768px)" />
         </div>
       </>
     )}

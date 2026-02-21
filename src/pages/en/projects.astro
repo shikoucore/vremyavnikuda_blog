@@ -35,10 +35,10 @@ const projects = projectsCollection.map(project => ({
     ) : (
       <>
         <div class="md:hidden">
-          <MobileProjectList projects={projects} client:media="(max-width: 767px)" />
+          <MobileProjectList projects={projects} lang={lang} client:media="(max-width: 767px)" />
         </div>
         <div class="hidden md:block">
-          <ProjectsRoadmapVisualization projects={projects} client:media="(min-width: 768px)" />
+          <ProjectsRoadmapVisualization projects={projects} lang={lang} client:media="(min-width: 768px)" />
         </div>
       </>
     )}

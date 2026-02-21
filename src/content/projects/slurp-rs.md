@@ -1,27 +1,67 @@
 ---
 title: "slurp-rs"
-description: "Waylandの領域選択ユーティリティ。安定運用中でhyprshot-rsへの直接統合を予定"
-github: "https://github.com/shikoucore/slurp-rs"
+description: "CLIと公開Rust APIの両方を備えたWayland領域選択ユーティリティ"
+github: "https://github.com/vremyavnikuda/slurp-rs"
 tags: ["rust", "linux", "wayland", "region-selection", "library"]
-featured: false
+featured: true
 lang: ja
 projectType: "project"
 category: "projects"
 parentProject: "hyprshot-rs"
-status: "archived"
-version: "0.1.0"
+status: "active"
+version: "0.2.0"
 roadmap:
   - version: "0.1.0"
-    releaseStatus: "close"
+    releaseStatus: "release"
     items:
-      - "Rust再実装は過剰設計だと結論"
-      - "slurpは安定・実運用され、致命的なバグなし"
-      - "WaylandのC前提APIはC++/Rustのイディオムと不一致"
-      - "書き直しはROIがマイナスで性能向上もほぼなし"
-      - "slurpをhyprshot-rsに直接統合する方針"
-      - "hyprshot-rsのcrateにslurpソースを同梱（vendor/slurp）"
+      - "CLIパースを `slurp` と同等のオプション/デフォルトで実装。"
+      - "usage/helpテキストの互換性を確保。"
+      - "不正オプションと引数不足時のエラーパスを実装。"
+      - "カラーパーサー互換（#RRGGBB / #RRGGBBAA）。"
+      - "stdinボックスパーサー（<x>,<y> <w>x<h> [label]）。"
+      - "ロックファイル挙動（XDG_RUNTIME_DIR / WAYLAND_DISPLAY）。"
+      - "フォーマットエンジン（%x %y %w %h %X %Y %W %H %l %o）を実装しユニットテスト。"
+      - "ジオメトリヘルパー（intersect, contains, size）。"
+      - "wayland-clientによるWayland初期化: display接続。"
+      - "wayland-clientによるWayland初期化: 必須globalのbind/check。"
+      - "wayland-clientによるWayland初期化: outputs/seats収集。"
+      - "wayland-clientによるWayland初期化: 利用可能時はxdg-outputで論理ジオメトリ収集。"
+      - "wayland-clientによるWayland初期化: xdg-output未対応時は物理ジオメトリにフォールバック（C版slurpと同挙動）。"
+      - "初期出力ライフサイクル: 出力ごとに wl_surface + zwlr_layer_surface_v1 を作成。"
+      - "初期出力ライフサイクル: anchor/exclusive zone/keyboard interactivity を適用。"
+      - "初期出力ライフサイクル: configure/closedイベント処理と ack_configure。"
+      - "入力状態機械: seat capability（pointer/keyboard/touch）処理。"
+      - "入力状態機械: pointer enter/motion/button の選択フロー。"
+      - "入力状態機械: touch down/motion/up の選択フロー。"
+      - "入力状態機械: Esc / Space / Shift キー制御。"
+      - "入力状態機械: 選択結果をフォーマット出力経路へ接続。"
+      - "SHMレンダリング: wl_shm pool/buffer をダブルバッファで確保。"
+      - "SHMレンダリング: wl_buffer::release によるバッファ解放処理。"
+      - "SHMレンダリング: 事前定義ボックス/選択fill・border/クロスヘア描画。"
+      - "SHMレンダリング: -d寸法オーバーレイ描画（Cairo文字 + bitmapフォールバック）。"
+      - "SHMレンダリング: attach/commit を入力イベントとlayer-surface configureに接続。"
+      - "Cairo描画経路: 背景、候補ボックス、クロスヘア、選択fill、選択border。"
+      - "Cairo描画経路: アンチエイリアス調整（図形はNONE、文字はDEFAULT）。"
+      - "Cairo描画経路: 奇数枠線幅（例 -w 1）の半ピクセル整列。"
+      - "Cairo描画経路: Cairo surface/context 作成失敗時はソフトウェア描画へフォールバック。"
+      - "終了/ライフサイクル: 終了前にoverlay surface/layer object/bufferを明示破棄。"
+      - "終了/ライフサイクル: teardown後にWayland接続をflushしてoverlay除去を高速化。"
+      - "cursor-shape対応: 利用可能時に wp_cursor_shape_manager_v1 をbind/use。"
+      - "cursor-shape対応: pointer enter時にcrosshairカーソルを設定。"
+      - "cursorフォールバック: cursor-shape非対応コンポジタ向けに seatごとの wl_pointer.set_cursor surface を作成。"
+      - "cursorフォールバック: XCURSOR_THEME + XCURSOR_SIZE でテーマカーソルを読み込み。"
+      - "cursorフォールバック: crosshair -> left_ptr -> builtin crosshair の順でフォールバック。"
+      - "cursorフォールバック: 出力スケールごとにSHMカーソルを描画。"
+  - version: "0.2.0"
+    releaseStatus: "release"
+    items:
+      - "他アプリへ直接統合できる公開Rust APIを追加: select_region, select_output, select_from_boxes, select。"
+      - "型付き選択モデル（Rect, Selection, ChoiceBox, SelectOptions）を追加し統合時の予測可能性を向上。"
+      - "型付きエラーモデル（SlurpError）を追加し、キャンセル処理を明確化。"
+      - "slurp-rsはCLI単体ツールとしてもライブラリ依存としても利用可能に。"
+      - "既存CLIの挙動は維持。"
 ---
 
-十分な検討の結果、ここでのRust再実装は過剰設計だと結論づけました。slurpはWayland上の領域選択という目的に対して、すでに完結した自給自足のソリューションで、安定しており、実運用され、致命的なバグもありません。Wayland自体はCで書かれ、C向けに設計されています。そのAPIはC++やRustのイディオムとは相性が悪く、結果として書き直してもROIはマイナスで、性能向上もほぼ期待できません。
+slurp-rs は Wayland 領域選択の Rust 実装として、再びアクティブに開発されています。
 
-おそらくslurpはhyprshot-rsに直接統合し、ユーザーが別途slurpをインストールする必要をなくします。hyprshot-rsのクレートでは、vendor/slurpのgit subtreeとしてslurpのソースを同梱しました。
+現在はスタンドアロンCLIとしても、他アプリへ直接組み込める公開Rust APIとしても利用できます。

@@ -1,27 +1,67 @@
-﻿---
+---
 title: "slurp-rs"
-description: "Wayland region selection utility; stable and planned for direct integration into hyprshot-rs"
-github: "https://github.com/shikoucore/slurp-rs"
+description: "Wayland region selection utility in Rust with both CLI and public library API"
+github: "https://github.com/vremyavnikuda/slurp-rs"
 tags: ["rust", "linux", "wayland", "region-selection", "library"]
-featured: false
+featured: true
 lang: en
 projectType: "project"
 category: "projects"
 parentProject: "hyprshot-rs"
-status: "archived"
-version: "0.1.0"
+status: "active"
+version: "0.2.0"
 roadmap:
   - version: "0.1.0"
-    releaseStatus: "close"
+    releaseStatus: "release"
     items:
-      - "Concluded a Rust rewrite is over-engineering for this scope"
-      - "Confirmed slurp is stable, actively used, and has no critical bugs"
-      - "Noted Wayland's C-first API mismatches C++/Rust idioms"
-      - "Rewrite would have negative ROI and negligible performance gains"
-      - "Plan to integrate slurp directly into hyprshot-rs"
-      - "Vendored slurp sources into the hyprshot-rs crate tarball (vendor/slurp)"
+      - "CLI parsing with the same options and defaults as slurp."
+      - "usage/help text parity."
+      - "error paths for invalid options and missing option arguments."
+      - "color parser parity (#RRGGBB / #RRGGBBAA)."
+      - "stdin box parser (<x>,<y> <w>x<h> [label])."
+      - "lock file behavior (XDG_RUNTIME_DIR / WAYLAND_DISPLAY)."
+      - "format engine for %x %y %w %h %X %Y %W %H %l %o (unit tested)."
+      - "geometry helpers (intersect, contains, size)."
+      - "Wayland bootstrap via wayland-client: connect to display."
+      - "Wayland bootstrap via wayland-client: bind/check required globals."
+      - "Wayland bootstrap via wayland-client: collect outputs/seats."
+      - "Wayland bootstrap via wayland-client: collect logical output geometry via xdg-output when available."
+      - "Wayland bootstrap via wayland-client: fallback to physical geometry when xdg-output is unavailable (same behavior as C slurp)."
+      - "Initial output lifecycle setup: create wl_surface + zwlr_layer_surface_v1 per output."
+      - "Initial output lifecycle setup: apply anchors/exclusive zone/keyboard interactivity."
+      - "Initial output lifecycle setup: handle configure/closed events and ack_configure."
+      - "Interactive input state machine: seat capability handling (pointer/keyboard/touch)."
+      - "Interactive input state machine: pointer enter/motion/button selection flow."
+      - "Interactive input state machine: touch down/motion/up selection flow."
+      - "Interactive input state machine: keyboard controls Esc, Space, Shift."
+      - "Interactive input state machine: selection result wired to format output path."
+      - "SHM rendering pipeline: wl_shm pool/buffer allocation with double buffering."
+      - "SHM rendering pipeline: buffer release handling via wl_buffer::release."
+      - "SHM rendering pipeline: overlay drawing for predefined boxes, selection fill/border, crosshair."
+      - "SHM rendering pipeline: -d dimensions overlay rendering (Cairo text, bitmap fallback)."
+      - "SHM rendering pipeline: attach/commit path wired to input and layer-surface configure events."
+      - "Cairo rendering path: background paint, choice boxes, crosshair, selection fill, selection border."
+      - "Cairo rendering path: antialias tuning (NONE for crisp primitives, DEFAULT for readable text)."
+      - "Cairo rendering path: half-pixel stroke alignment for odd border widths (e.g. -w 1)."
+      - "Cairo rendering path: software renderer fallback when Cairo surface/context creation fails."
+      - "Teardown/lifecycle: explicit destruction of overlay surfaces/layer objects/buffers before exit."
+      - "Teardown/lifecycle: flush Wayland connection after teardown to speed up overlay removal."
+      - "cursor-shape protocol support: bind/use wp_cursor_shape_manager_v1 when available."
+      - "cursor-shape protocol support: set crosshair cursor on pointer enter."
+      - "cursor fallback path: create wl_pointer.set_cursor surface per seat when cursor-shape protocol is unavailable."
+      - "cursor fallback path: load themed cursor images via XCURSOR_THEME + XCURSOR_SIZE."
+      - "cursor fallback path: fallback chain crosshair -> left_ptr -> builtin crosshair."
+      - "cursor fallback path: render SHM cursor per-output scale."
+  - version: "0.2.0"
+    releaseStatus: "release"
+    items:
+      - "Added public Rust API for direct integration into other applications: select_region, select_output, select_from_boxes, select."
+      - "Added typed selection model (Rect, Selection, ChoiceBox, SelectOptions) for predictable integration."
+      - "Added typed error model (SlurpError) with explicit cancellation handling."
+      - "slurp-rs can now be used both as a standalone CLI tool and as a library dependency."
+      - "Existing CLI behavior is preserved."
 ---
 
-After extensive analysis, I concluded that a Rust rewrite here is over-engineering. slurp is already a complete, self-contained solution for its specific task on Wayland; it is stable, actively used, and has no critical bugs. Wayland itself is written in C and designed around C, and its API relies on patterns that are foreign to C++ and Rust idioms. As a result, a rewrite would bring negative ROI and virtually no performance gains.
+slurp-rs is an actively maintained Rust implementation of Wayland region selection.
 
-Most likely, slurp will be integrated directly into hyprshot-rs to eliminate the need for users to install slurp separately. The hyprshot-rs crate now vendors slurp sources in its package tarball (via a git subtree under `vendor/slurp`) to support this direction.
+It now provides both a standalone CLI and a reusable public Rust API for embedding selection flows directly inside other applications.

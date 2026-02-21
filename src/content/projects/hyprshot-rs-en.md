@@ -10,7 +10,7 @@ projectType: "project"
 category: "projects"
 parentProject: "Shikou Core"
 status: "active"
-version: "0.1.6"
+version: "0.1.7"
 roadmap:
   - version: "0.1.0"
     releaseStatus: "release"
@@ -55,6 +55,16 @@ roadmap:
       - "Fixed: Build reliability: Slurp embedding failures no longer break builds."
       - "Fixed: Embedded slurp safety: Atomic updates with locking and integrity checks."
       - "Fixed: Geometry handling: More consistent capture processing across modes."
+  - version: "0.1.7"
+    releaseStatus: "release"
+    items:
+      - "Selector backend: Default selection flow now uses slurp-rs API."
+      - "Selection errors: Region cancel guidance now uses typed selector errors."
+      - "Geometry conversion: Capture path now uses explicit Geometry -> grim_rs::Box conversion."
+      - "Runtime requirements: Selection no longer depends on an external slurp binary."
+      - "Reference: slurp-rs repository moved to https://github.com/vremyavnikuda/slurp-rs"
 ---
 
 A Rust utility for taking screenshots in Hyprland using your mouse. It supports capturing the entire monitor (output), the active monitor, selected regions, selected windows, and the active window. Screenshots can be saved to a chosen directory or copied to the clipboard (PNG format). It includes a TOML-based config (~/.config/hyprshot-rs/config.toml) for paths, hotkeys, notifications, and more. Available as a CLI tool and as a crate for integration.
+
+As of v0.1.7, the default selector backend is powered by slurp-rs API integration, so selection no longer requires an external `slurp` binary.
