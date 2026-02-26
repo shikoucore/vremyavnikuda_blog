@@ -8,6 +8,7 @@ import type { Project, ReleaseStatus } from './projects/types';
 import {
   PROJECT_STATUS_VALUES,
   filterProjectsForNavigator,
+  sortRoadmapByVersionDesc,
   type ProjectCategoryFilter,
   type ProjectStatusValue,
 } from '../lib/projectsNavigator';
@@ -149,18 +150,18 @@ export default function ProjectsRoadmapVisualization({ projects, lang = 'en' }: 
     const rootProjects: TreeNode[] = [];
 
     visibleProjects.forEach((project) => {
-      const versionNodes: TreeNode[] =
-        showVersionNodes
-          ? project.roadmap?.map((milestone) => ({
-              name: `v${milestone.version}`,
-              type: 'version' as const,
-              data: {
-                version: milestone.version,
-                releaseStatus: milestone.releaseStatus,
-                items: milestone.items,
-              },
-            })) ?? []
-          : [];
+      const sortedRoadmap = sortRoadmapByVersionDesc(project.roadmap ?? []);
+      const versionNodes: TreeNode[] = showVersionNodes
+        ? sortedRoadmap.map((milestone) => ({
+            name: `v${milestone.version}`,
+            type: 'version' as const,
+            data: {
+              version: milestone.version,
+              releaseStatus: milestone.releaseStatus,
+              items: milestone.items,
+            },
+          }))
+        : [];
 
       const projectNode: TreeNode = {
         name: project.title,
@@ -1031,7 +1032,7 @@ export default function ProjectsRoadmapVisualization({ projects, lang = 'en' }: 
               <div>
                 <h3 className="mb-4 text-xl font-bold text-primary-400">Roadmap</h3>
                 <div className="space-y-4">
-                  {selectedProject.roadmap.map((milestone) => (
+                  {sortRoadmapByVersionDesc(selectedProject.roadmap).map((milestone) => (
                     <div
                       key={milestone.version}
                       className="rounded-lg border border-[var(--color-border)] p-4"

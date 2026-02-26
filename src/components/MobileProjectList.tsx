@@ -4,6 +4,7 @@ import {
   PROJECT_STATUS_VALUES,
   buildProjectHierarchy,
   filterProjectsForNavigator,
+  sortRoadmapByVersionDesc,
   type ProjectCategoryFilter,
   type ProjectStatusValue,
   type ProjectWithChildren,
@@ -205,7 +206,7 @@ export default function MobileProjectList({ projects, lang = 'en' }: Props) {
 
             {hasVersions && (
               <div className="space-y-1" style={{ marginLeft: `${(level + 1) * 16}px` }}>
-                {project.roadmap!.map((milestone) => {
+                {sortRoadmapByVersionDesc(project.roadmap!).map((milestone) => {
                   const statusStyle = releaseStatusStyles[milestone.releaseStatus];
                   return (
                     <button
@@ -489,7 +490,7 @@ export default function MobileProjectList({ projects, lang = 'en' }: Props) {
               <div>
                 <h3 className="mb-3 text-lg font-bold text-primary-400">Roadmap</h3>
                 <div className="space-y-3">
-                  {selectedProject.roadmap.map((milestone) => (
+                  {sortRoadmapByVersionDesc(selectedProject.roadmap).map((milestone) => (
                     <div
                       key={milestone.version}
                       className="rounded-lg border border-[var(--color-border)] p-3"
