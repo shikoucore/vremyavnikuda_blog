@@ -10,7 +10,7 @@ projectType: "project"
 category: "projects"
 parentProject: "hyprshot-rs"
 status: "active"
-version: "0.1.5"
+version: "0.1.6"
 roadmap:
   - version: "0.1.0"
     releaseStatus: "release"
@@ -49,6 +49,12 @@ roadmap:
       - "Dependency update: Bumped thiserror to v2.0.18"
       - "MSRV: Minimum supported Rust version is now 1.68"
       - "Integration test cleanup: Moved lib.rs tests into the tests/ suite and aligned assertions with public getters"
+  - version: "0.1.6"
+    releaseStatus: "release"
+    items:
+      - "Fixed: Incorrect color channels with wl_shm::Argb8888. Resolved red/blue channel swap in screenshots on setups where screencopy reports Argb8888 (e.g. AMD/Hyprland) by converting BGRA memory layout to crate-level RGBA"
+      - "Changed: Unified shm format conversion. Centralized wl_shm -> RGBA byte conversion in a single internal helper and reused it across single-output and multi-output capture paths"
+      - "Changed: Format handling parity. Aligned default format fallback behavior between single-output and multi-output capture paths"
 ---
 
 A Rust-based utility and library for taking screenshots on Wayland compositors. It has no external C dependencies, supports multi-monitor setups, output transformations (rotation and mirroring), region capture, high-quality image scaling (Triangle, CatmullRom, Lanczos3), and saving to PNG/JPEG/PPM formats. Available as a CLI tool (cargo install grim-rs) and as a crate for integrating into your own applications.
