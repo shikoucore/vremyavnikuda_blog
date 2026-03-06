@@ -1,1074 +1,842 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { hierarchy, tree } from 'd3-hierarchy';
-import { select } from 'd3-selection';
-import { zoom, zoomIdentity } from 'd3-zoom';
-import type { ZoomBehavior, ZoomTransform } from 'd3-zoom';
-import { useDeviceType } from '../hooks/useMediaQuery';
-import type { Project, ReleaseStatus } from './projects/types';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { ProjectInspectorProject, ProjectRoadmapNodeData, ReleaseStatus } from './projects/types';
 import {
   PROJECT_STATUS_VALUES,
-  filterProjectsForNavigator,
   sortRoadmapByVersionDesc,
-  type ProjectCategoryFilter,
   type ProjectStatusValue,
 } from '../lib/projectsNavigator';
 import { getProjectsNavigatorCopy, type NavigatorLang } from '../lib/projectsNavigatorI18n';
-import FocusProjectSelect from './FocusProjectSelect';
 
 interface Props {
-  projects: Project[];
+  projects: ProjectRoadmapNodeData[];
+  detailsUrl: string;
   lang?: NavigatorLang;
 }
 
-interface TreeNode {
-  name: string;
-  type: 'root' | 'project' | 'version';
-  data?: Project | { version: string; releaseStatus: ReleaseStatus; items?: string[] };
-  children?: TreeNode[];
+interface SelectedVersion {
+  projectTitle: string;
+  version: string;
+  releaseStatus: ReleaseStatus;
+  items?: string[];
 }
 
-export default function ProjectsRoadmapVisualization({ projects, lang = 'en' }: Props) {
-  const deviceType = useDeviceType();
-  const svgRef = useRef<SVGSVGElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null);
-  const initialTransformRef = useRef<ZoomTransform | null>(null);
+type RoadmapNodeType = 'category' | 'project' | 'contribution';
 
-  const [tooltip, setTooltip] = useState<{
-    visible: boolean;
-    x: number;
-    y: number;
-    content: Project | { version: string; releaseStatus: ReleaseStatus; items?: string[] } | null;
-    type: 'project' | 'version';
-  }>({ visible: false, x: 0, y: 0, content: null, type: 'project' });
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [selectedVersion, setSelectedVersion] = useState<{
-    projectTitle: string;
-    version: string;
-    releaseStatus: ReleaseStatus;
-    items?: string[];
-  } | null>(null);
+interface RoadmapTreeNode {
+  title: string;
+  projectType: RoadmapNodeType;
+  category?: string;
+  project: ProjectRoadmapNodeData;
+  children: RoadmapTreeNode[];
+}
 
-  const [query, setQuery] = useState('');
-  const [focusTitle, setFocusTitle] = useState<string | null>(null);
-  const [showLinkedProjects, setShowLinkedProjects] = useState(true);
-  const [showVersionNodes, setShowVersionNodes] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState<ProjectCategoryFilter>('all');
-  const [selectedStatuses, setSelectedStatuses] = useState<ProjectStatusValue[]>([
-    ...PROJECT_STATUS_VALUES,
-  ]);
+interface ProjectsInspectorResponse {
+  projects: ProjectInspectorProject[];
+}
+
+const ROADMAP_THEME = {
+  fontFamily: "'Cascadia Code', 'JetBrains Mono', monospace",
+  colors: {
+    category: {
+      bg: '#004e75',
+      border: '#00c3ff',
+      text: '#ffffff',
+      shadow: '4px 4px 0 0 #00c3ff',
+    },
+    project: {
+      bg: '#0d1b2a',
+      border: '#00c3ff',
+      text: '#f3f4f6',
+      shadow: '3px 3px 0 0 #007a99',
+    },
+    contribution: {
+      bg: '#3c1e70',
+      border: '#a370f7',
+      text: '#e0aaff',
+      shadow: '4px 4px 0 0 #a370f7',
+    },
+  },
+  connector: {
+    color: '#00c3ff',
+    shadow: '0 0 8px rgba(0,195,255,0.6)',
+    width: 2,
+    round: 999,
+  },
+  groupBox: {
+    borderColor: '#1a364a',
+    borderWidth: 1.5,
+    borderRadius: 12,
+    background: 'rgba(8, 16, 22, 0.8)',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 0 0 1px rgba(0, 195, 255, 0.04)',
+    padding: '12px 14px',
+  },
+  centerNode: {
+    bg: '#0f7a43',
+    border: '#22c55e',
+    text: '#ecfdf5',
+    shadow: '4px 4px 0 0 #22c55e',
+  },
+} as const;
+
+const ROADMAP_FONT = ROADMAP_THEME.fontFamily;
+const ROADMAP_LINE = ROADMAP_THEME.connector.color;
+const ROADMAP_LINE_SHADOW = ROADMAP_THEME.connector.shadow;
+const DIAGRAM_CANVAS = { width: 1000, height: 1100 } as const;
+
+const statusBadgeClass: Record<string, string> = {
+  active: 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300',
+  maintenance: 'border-blue-500/40 bg-blue-500/15 text-blue-300',
+  completed: 'border-violet-500/40 bg-violet-500/15 text-violet-300',
+  archived: 'border-slate-500/40 bg-slate-500/15 text-slate-300',
+};
+
+const versionColor = (status: ReleaseStatus): string => {
+  if (status === 'release') return '#22c55e';
+  if (status === 'close') return '#ef4444';
+  return '#f59e0b';
+};
+
+const versionLabel = (status: ReleaseStatus, lang: NavigatorLang): string => {
+  if (lang === 'ja') {
+    if (status === 'release') return 'リリース';
+    if (status === 'close') return 'クローズ';
+    return '開発中';
+  }
+  if (status === 'release') return 'Release';
+  if (status === 'close') return 'Close';
+  return 'Dev';
+};
+
+const statusToKnown = (status: string): ProjectStatusValue => {
+  if ((PROJECT_STATUS_VALUES as readonly string[]).includes(status)) {
+    return status as ProjectStatusValue;
+  }
+  return 'archived';
+};
+
+const normalizeProjectType = (value?: string): RoadmapNodeType => {
+  if (value === 'category') return 'category';
+  if (value === 'contribution') return 'contribution';
+  return 'project';
+};
+
+const subtreeWeight = (node: RoadmapTreeNode): number => {
+  if (node.children.length === 0) return 1;
+  return 1 + node.children.reduce((sum, child) => sum + subtreeWeight(child), 0);
+};
+
+const rootRank = (title: string): number => {
+  const normalized = title.toLowerCase();
+  if (normalized === 'contributing') return 0;
+  if (normalized === 'projects') return 1;
+  if (normalized === 'shikou core') return 2;
+  return 3;
+};
+
+const typeRank = (type: RoadmapNodeType): number => {
+  if (type === 'category') return 0;
+  if (type === 'project') return 1;
+  return 2;
+};
+
+const sortTree = (nodes: RoadmapTreeNode[], rootLevel = false): void => {
+  nodes.sort((left, right) => {
+    if (rootLevel) {
+      const rankDiff = rootRank(left.title) - rootRank(right.title);
+      if (rankDiff !== 0) return rankDiff;
+      const weightDiff = subtreeWeight(right) - subtreeWeight(left);
+      if (weightDiff !== 0) return weightDiff;
+    }
+
+    const typeDiff = typeRank(left.projectType) - typeRank(right.projectType);
+    if (typeDiff !== 0) return typeDiff;
+    return left.title.localeCompare(right.title, 'en', { sensitivity: 'base' });
+  });
+
+  for (const node of nodes) {
+    if (node.children.length > 0) {
+      sortTree(node.children, false);
+    }
+  }
+};
+
+export default function ProjectsRoadmapVisualization({ projects, detailsUrl, lang = 'en' }: Props) {
   const t = getProjectsNavigatorCopy(lang);
 
-  const releaseStatusLabel = (status: ReleaseStatus): string => {
-    if (status === 'release') return 'Release';
-    if (status === 'close') return 'Close';
-    return 'Dev';
-  };
+  const [selectedProjectTitle, setSelectedProjectTitle] = useState<string | null>(null);
+  const [selectedVersion, setSelectedVersion] = useState<SelectedVersion | null>(null);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [viewportWidth, setViewportWidth] = useState(0);
+  const [projectDetailsByTitle, setProjectDetailsByTitle] = useState<Map<string, ProjectInspectorProject> | null>(null);
+  const [detailsState, setDetailsState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const inspectorRef = useRef<HTMLElement | null>(null);
+  const detailsRequestRef = useRef<Promise<Map<string, ProjectInspectorProject>> | null>(null);
 
-  const releaseStatusBadgeClass = (status: ReleaseStatus): string => {
-    if (status === 'release') return 'bg-green-900/30 text-green-400';
-    if (status === 'close') return 'bg-red-900/30 text-red-400';
-    return 'bg-orange-900/30 text-orange-400';
-  };
+  const loadProjectDetails = useCallback(async (): Promise<Map<string, ProjectInspectorProject>> => {
+    if (projectDetailsByTitle) return projectDetailsByTitle;
+    if (detailsRequestRef.current) return detailsRequestRef.current;
 
-  const releaseStatusColor = (status: ReleaseStatus): string => {
-    if (status === 'release') return '#10b981';
-    if (status === 'close') return '#ef4444';
-    return '#f59e0b';
-  };
+    setDetailsState('loading');
+    const request = fetch(detailsUrl)
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to load project details: ${response.status}`);
+        }
 
-  const projectLookup = useMemo(() => {
-    return new Map(projects.map((project) => [project.title, project]));
-  }, [projects]);
+        const payload = (await response.json()) as ProjectsInspectorResponse;
+        const detailsMap = new Map(payload.projects.map((project) => [project.title, project]));
+        setProjectDetailsByTitle(detailsMap);
+        setDetailsState('ready');
+        return detailsMap;
+      })
+      .catch((error) => {
+        detailsRequestRef.current = null;
+        setDetailsState('error');
+        throw error;
+      });
 
-  const sortedProjectTitles = useMemo(() => {
-    return [...projects]
-      .map((project) => project.title)
-      .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
-  }, [projects]);
+    detailsRequestRef.current = request;
+    return request;
+  }, [detailsUrl, projectDetailsByTitle]);
 
-  const selectedStatusSet = useMemo(() => {
-    return new Set(selectedStatuses);
-  }, [selectedStatuses]);
+  const roots = useMemo<RoadmapTreeNode[]>(() => {
+    if (projects.length === 0) return [];
 
-  const navigatorResult = useMemo(() => {
-    return filterProjectsForNavigator(projects, {
-      query,
-      statuses: selectedStatusSet,
-      category: categoryFilter,
-      focusTitle,
-    });
-  }, [projects, query, selectedStatusSet, categoryFilter, focusTitle]);
+    const nodeByTitle = new Map<string, RoadmapTreeNode>();
+    for (const project of projects) {
+      nodeByTitle.set(project.title, {
+        title: project.title,
+        projectType: normalizeProjectType(project.projectType),
+        category: project.category,
+        project,
+        children: [],
+      });
+    }
 
-  const visibleProjects = navigatorResult.visibleProjects;
-
-  const hasActiveFilters =
-    query.trim().length > 0 ||
-    categoryFilter !== 'all' ||
-    selectedStatuses.length !== PROJECT_STATUS_VALUES.length ||
-    !!focusTitle;
-  const searchActive = query.trim().length > 0;
-  const showLinkedEdgesOnCanvas = showLinkedProjects && !searchActive;
-
-  const toggleStatus = (status: ProjectStatusValue): void => {
-    setSelectedStatuses((previous) => {
-      if (previous.includes(status)) {
-        if (previous.length === 1) return previous;
-        return previous.filter((entry) => entry !== status);
+    const treeRoots: RoadmapTreeNode[] = [];
+    for (const project of projects) {
+      const node = nodeByTitle.get(project.title);
+      if (!node) continue;
+      if (project.parentProject) {
+        const parent = nodeByTitle.get(project.parentProject);
+        if (parent) {
+          parent.children.push(node);
+          continue;
+        }
       }
-      return [...previous, status];
-    });
+      treeRoots.push(node);
+    }
+
+    sortTree(treeRoots, true);
+    return treeRoots;
+  }, [projects]);
+
+  const selectedProject = useMemo(() => {
+    if (!selectedProjectTitle || !projectDetailsByTitle) return null;
+    return projectDetailsByTitle.get(selectedProjectTitle) ?? null;
+  }, [projectDetailsByTitle, selectedProjectTitle]);
+
+  const relatedProjects = selectedProject?.linkedProjects
+    ?.map((title) => projectDetailsByTitle?.get(title))
+    .filter((entry): entry is ProjectInspectorProject => !!entry);
+
+  const selectProject = (title: string): void => {
+    setSelectedProjectTitle(title);
+    setSelectedVersion(null);
+    setInspectorOpen(true);
+    void loadProjectDetails();
   };
 
-  const resetFilters = (): void => {
-    setQuery('');
-    setFocusTitle(null);
-    setCategoryFilter('all');
-    setSelectedStatuses([...PROJECT_STATUS_VALUES]);
-    setShowLinkedProjects(true);
-    setShowVersionNodes(false);
-  };
-
-  const resetView = (): void => {
-    if (!svgRef.current || !zoomBehaviorRef.current || !initialTransformRef.current) return;
-    const svg = select(svgRef.current);
-    svg.call(zoomBehaviorRef.current.transform as any, initialTransformRef.current);
+  const selectVersion = (version: SelectedVersion): void => {
+    setSelectedVersion((previous) =>
+      previous?.projectTitle === version.projectTitle && previous.version === version.version ? null : version,
+    );
+    setSelectedProjectTitle(version.projectTitle);
+    setInspectorOpen(true);
+    void loadProjectDetails();
   };
 
   useEffect(() => {
-    if (!svgRef.current || projects.length === 0) return;
-
-    select(svgRef.current).selectAll('*').remove();
-    setTooltip((previous) => ({ ...previous, visible: false }));
-
-    if (visibleProjects.length === 0) {
-      return;
+    if (selectedProjectTitle || selectedVersion) {
+      setInspectorOpen(true);
     }
+  }, [selectedProjectTitle, selectedVersion]);
 
-    const projectsMap = new Map<string, TreeNode>();
-    const rootProjects: TreeNode[] = [];
-
-    visibleProjects.forEach((project) => {
-      const sortedRoadmap = sortRoadmapByVersionDesc(project.roadmap ?? []);
-      const versionNodes: TreeNode[] = showVersionNodes
-        ? sortedRoadmap.map((milestone) => ({
-            name: `v${milestone.version}`,
-            type: 'version' as const,
-            data: {
-              version: milestone.version,
-              releaseStatus: milestone.releaseStatus,
-              items: milestone.items,
-            },
-          }))
-        : [];
-
-      const projectNode: TreeNode = {
-        name: project.title,
-        type: 'project',
-        data: project,
-        children: [...versionNodes],
-      };
-
-      projectsMap.set(project.title, projectNode);
-    });
-
-    visibleProjects.forEach((project) => {
-      const projectNode = projectsMap.get(project.title);
-      if (!projectNode) return;
-
-      if (project.parentProject) {
-        const parentNode = projectsMap.get(project.parentProject);
-        if (parentNode) {
-          parentNode.children?.push(projectNode);
-        } else {
-          rootProjects.push(projectNode);
-        }
-      } else {
-        rootProjects.push(projectNode);
-      }
-    });
-
-    const treeData: TreeNode = {
-      name: focusTitle ? `focus: ${focusTitle}` : 'vremyavnikuda',
-      type: 'root',
-      children: rootProjects,
+  useEffect(() => {
+    const updateViewportWidth = (): void => {
+      setViewportWidth(window.innerWidth);
     };
 
-    const width = containerRef.current?.clientWidth || window.innerWidth - 20;
-    const height = deviceType === 'tablet' ? 700 : Math.max(800, window.innerHeight - 100);
-    const margin =
-      deviceType === 'tablet'
-        ? { top: 10, right: 20, bottom: 10, left: 20 }
-        : { top: 20, right: 40, bottom: 20, left: 40 };
+    updateViewportWidth();
+    window.addEventListener('resize', updateViewportWidth);
 
-    const nodeRadius = deviceType === 'tablet' ? 10 : 12;
-    const touchTargetSize = 44;
-    const rectWidth = deviceType === 'tablet' ? 120 : 160;
-    const rectHeight = deviceType === 'tablet' ? 36 : 40;
-    const nodeSpacing = {
-      vertical: rectHeight + (deviceType === 'tablet' ? 24 : 28),
-      horizontal: rectWidth + (deviceType === 'tablet' ? 90 : 110),
+    return () => window.removeEventListener('resize', updateViewportWidth);
+  }, []);
+
+  useEffect(() => {
+    if (!inspectorOpen) return;
+    let armed = false;
+    const armTimer = window.setTimeout(() => {
+      armed = true;
+    }, 0);
+    const onPointerDown = (event: PointerEvent): void => {
+      if (!armed) return;
+      const target = event.target;
+      if (target instanceof Node && inspectorRef.current?.contains(target)) {
+        return;
+      }
+      setInspectorOpen(false);
     };
+    window.addEventListener('pointerdown', onPointerDown, true);
+    return () => {
+      window.clearTimeout(armTimer);
+      window.removeEventListener('pointerdown', onPointerDown, true);
+    };
+  }, [inspectorOpen]);
 
-    const svg = select(svgRef.current)
-      .attr('width', width)
-      .attr('height', height)
-      .style('font-family', '"Cascadia Code", monospace')
-      .style('font-size', '13px');
-
-    const g = svg.append('g');
-
-    const treeLayout = tree<TreeNode>()
-      .nodeSize([nodeSpacing.vertical, nodeSpacing.horizontal])
-      .separation((a, b) => {
-        const aIsCategory = a.data.type === 'project' && a.depth === 1;
-        const bIsCategory = b.data.type === 'project' && b.depth === 1;
-        const bothAreCategories = aIsCategory && bIsCategory;
-        if (bothAreCategories && a.parent === b.parent) {
-          return deviceType === 'tablet' ? 2 : 2.4;
-        }
-
-        const aIsVersion = a.data.type === 'version';
-        const bIsVersion = b.data.type === 'version';
-        if (aIsVersion || bIsVersion) {
-          return deviceType === 'tablet' ? 1.25 : 1.4;
-        }
-
-        const baseSeparation = deviceType === 'tablet' ? 1.35 : 1.5;
-        const crossSeparation = deviceType === 'tablet' ? 1.7 : 2.0;
-        return a.parent === b.parent ? baseSeparation : crossSeparation;
-      });
-
-    const root = hierarchy(treeData);
-    const treeDataComputed = treeLayout(root);
-    const rootNode = treeDataComputed;
-    const rootY = rootNode.y;
-    const rootX = rootNode.x;
-
-    if (rootNode.children && rootNode.children.length > 0) {
-      const children = rootNode.children;
-      const leftBranches: typeof children = [];
-      const rightBranches: typeof children = [];
-
-      children.forEach((child) => {
-        const childName = child.data.name;
-        if (childName === 'Shikou Core' || childName === 'projects') {
-          leftBranches.push(child);
-        } else {
-          rightBranches.push(child);
-        }
-      });
-
-      if (leftBranches.length > 0) {
-        let leftMinX = Infinity;
-        let leftMaxX = -Infinity;
-        leftBranches.forEach((branch) => {
-          branch.descendants().forEach((node) => {
-            if (node.x < leftMinX) leftMinX = node.x;
-            if (node.x > leftMaxX) leftMaxX = node.x;
-          });
-        });
-
-        const leftCenterX = (leftMinX + leftMaxX) / 2;
-        const leftOffsetX = rootX - leftCenterX;
-        leftBranches.forEach((branch) => {
-          branch.descendants().forEach((node) => {
-            node.x += leftOffsetX;
-            node.y = rootY - (node.y - rootY);
-          });
-        });
+  useEffect(() => {
+    if (!inspectorOpen) return;
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        setInspectorOpen(false);
       }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [inspectorOpen]);
 
-      if (rightBranches.length > 0) {
-        let rightMinX = Infinity;
-        let rightMaxX = -Infinity;
-        rightBranches.forEach((branch) => {
-          branch.descendants().forEach((node) => {
-            if (node.x < rightMinX) rightMinX = node.x;
-            if (node.x > rightMaxX) rightMaxX = node.x;
-          });
-        });
+  const selectedTitle = selectedProjectTitle;
+  const canvasVerticalPadding = 32 + 60;
+  const availableDiagramWidth = viewportWidth > 0 ? Math.max(viewportWidth - 24, 280) : DIAGRAM_CANVAS.width;
+  const isMobileViewport = viewportWidth > 0 && viewportWidth < 768;
+  const isTabletViewport = viewportWidth >= 768 && viewportWidth < 1024;
+  const isDiagramReady = viewportWidth > 0;
+  const diagramScale = viewportWidth > 0
+    ? Math.min(1, availableDiagramWidth / DIAGRAM_CANVAS.width)
+    : 1;
+  const scaledCanvasWidth = DIAGRAM_CANVAS.width * diagramScale;
+  const scaledCanvasHeight = (DIAGRAM_CANVAS.height + canvasVerticalPadding) * diagramScale;
+  const inspectorShellStyle = isMobileViewport
+    ? { padding: '12px', paddingTop: '72px' }
+    : isTabletViewport
+      ? { padding: '14px', paddingTop: '84px' }
+    : { padding: '16px', paddingTop: '96px' };
+  const inspectorPanelStyle = isMobileViewport
+    ? { width: 'min(76vw, 290px)', height: 'calc(100vh - 5.5rem)' }
+    : isTabletViewport
+      ? { width: 'min(42vw, 340px)', height: 'calc(100vh - 6.25rem)' }
+    : { width: 'min(92vw, 380px)', height: 'calc(100vh - 7rem)' };
+  const roadmapByTitle = useMemo(() => {
+    const map = new Map<string, RoadmapTreeNode>();
+    const visit = (node: RoadmapTreeNode): void => {
+      map.set(node.title, node);
+      node.children.forEach(visit);
+    };
+    roots.forEach(visit);
+    return map;
+  }, [roots]);
 
-        const rightCenterX = (rightMinX + rightMaxX) / 2;
-        const rightOffsetX = rootX - rightCenterX;
-        rightBranches.forEach((branch) => {
-          branch.descendants().forEach((node) => {
-            node.x += rightOffsetX;
-          });
-        });
-      }
-    }
+  const renderDiagramLine = (
+    left: number,
+    top: number,
+    options: { width?: number; height?: number },
+  ) => (
+    <div
+      style={{
+        position: 'absolute',
+        left,
+        top,
+        width: options.width ?? ROADMAP_THEME.connector.width,
+        height: options.height ?? ROADMAP_THEME.connector.width,
+        background: ROADMAP_LINE,
+        boxShadow: ROADMAP_LINE_SHADOW,
+        borderRadius: ROADMAP_THEME.connector.round,
+        zIndex: 0,
+      }}
+    />
+  );
 
-    let minX = Infinity;
-    let maxX = -Infinity;
-    let minY = Infinity;
-    let maxY = -Infinity;
+  const renderDiagramNode = ({
+    title,
+    label,
+    variant,
+    left,
+    top,
+    width,
+    height,
+    interactive = true,
+  }: {
+    title: string;
+    label?: string;
+    variant: 'root' | 'label' | 'project' | 'contribution';
+    left: number;
+    top: number;
+    width: number;
+    height?: number;
+    interactive?: boolean;
+  }) => {
+    const node = roadmapByTitle.get(title);
+    const isSelected = selectedTitle === title;
 
-    treeDataComputed.descendants().forEach((node) => {
-      if (node.x < minX) minX = node.x;
-      if (node.x > maxX) maxX = node.x;
-      if (node.y < minY) minY = node.y;
-      if (node.y > maxY) maxY = node.y;
-    });
+    const palette =
+      title === 'vremyavnikuda'
+        ? ROADMAP_THEME.centerNode
+        : variant === 'root'
+        ? ROADMAP_THEME.colors.category
+        : variant === 'label'
+          ? ROADMAP_THEME.colors.category
+          : variant === 'contribution'
+            ? ROADMAP_THEME.colors.contribution
+            : ROADMAP_THEME.colors.project;
 
-    const padding = deviceType === 'tablet' ? 60 : 100;
-    const dataWidth = maxY - minY + padding * 2;
-    const dataHeight = maxX - minX + padding * 2;
-    const scale = Math.min(
-      (width - margin.left - margin.right) / dataWidth,
-      (height - margin.top - margin.bottom) / dataHeight,
-      deviceType === 'tablet' ? 0.8 : 1,
+    const borderColor = isSelected ? '#22f0ff' : palette.border;
+    const boxShadow =
+      variant === 'label'
+        ? `2px 2px 0 0 ${palette.border}`
+        : palette.shadow;
+
+    return (
+      <button
+        key={`${title}-${variant}-${left}-${top}`}
+        type="button"
+        onClick={() => {
+          if (interactive && node) selectProject(node.title);
+        }}
+        style={{
+          position: 'absolute',
+          left,
+          top,
+          width,
+          height,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: palette.bg,
+          border: `2px solid ${borderColor}`,
+          color: palette.text,
+          borderRadius: variant === 'label' ? 4 : 8,
+          boxShadow,
+          fontFamily: ROADMAP_FONT,
+          fontSize: variant === 'label' ? 12 : 13,
+          fontWeight: 700,
+          letterSpacing: 0.3,
+          cursor: interactive && node ? 'pointer' : 'default',
+          transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
+          transform: 'translateY(0)',
+          userSelect: 'none',
+          zIndex: variant === 'label' ? 20 : 10,
+        }}
+        onMouseEnter={(event) => {
+          if (!(interactive && node)) return;
+          const element = event.currentTarget;
+          element.style.transform = 'translateY(-3px)';
+          element.style.boxShadow =
+            variant === 'label'
+              ? `3px 3px 0 0 ${palette.border}`
+              : `5px 5px 0 0 ${palette.border}`;
+        }}
+        onMouseLeave={(event) => {
+          if (!(interactive && node)) return;
+          const element = event.currentTarget;
+          element.style.transform = 'translateY(0)';
+          element.style.boxShadow = boxShadow;
+        }}
+      >
+        {label ?? title}
+      </button>
     );
+  };
 
-    const centerX = (width - (maxY - minY) * scale) / 2 - minY * scale;
-    const centerY = (height - (maxX - minX) * scale) / 2 - minX * scale;
+  const renderGroupBox = (left: number, top: number, width: number, height: number) => (
+    <div
+      style={{
+        position: 'absolute',
+        left,
+        top,
+        width,
+        height,
+        border: `${ROADMAP_THEME.groupBox.borderWidth}px solid ${ROADMAP_THEME.groupBox.borderColor}`,
+        background: ROADMAP_THEME.groupBox.background,
+        borderRadius: ROADMAP_THEME.groupBox.borderRadius,
+        boxShadow: ROADMAP_THEME.groupBox.boxShadow,
+        zIndex: 0,
+        pointerEvents: 'none',
+      }}
+    />
+  );
 
-    const statusColors = {
-      active: '#10b981',
-      maintenance: '#3b82f6',
-      completed: '#8b5cf6',
-      archived: '#6b7280',
-    };
-
-    const versionCircleRadius = nodeRadius - (deviceType === 'tablet' ? 3 : 4);
-    const rootCircleRadius = nodeRadius;
-
-    const getNodeEdgeOffset = (nodeType: string): number => {
-      if (nodeType === 'project') return rectWidth / 2;
-      if (nodeType === 'version') return versionCircleRadius;
-      if (nodeType === 'root') return rootCircleRadius;
-      return rectWidth / 2;
-    };
-
-    const createEdgeToEdgePath = (link: any): string => {
-      const sourceY = link.source.y;
-      const targetY = link.target.y;
-      const sourceX = link.source.x;
-      const targetX = link.target.x;
-      const sourceType = link.source.data.type;
-      const targetType = link.target.data.type;
-      const sourceOffset = getNodeEdgeOffset(sourceType);
-      const targetOffset = getNodeEdgeOffset(targetType);
-      const goingRight = targetY > sourceY;
-
-      let x0: number;
-      let x1: number;
-      if (goingRight) {
-        x0 = sourceY + sourceOffset;
-        x1 = targetY - targetOffset;
-      } else {
-        x0 = sourceY - sourceOffset;
-        x1 = targetY + targetOffset;
-      }
-
-      const y0 = sourceX;
-      const y1 = targetX;
-      const mx = (x0 + x1) / 2;
-      return `M${x0},${y0} C${mx},${y0} ${mx},${y1} ${x1},${y1}`;
-    };
-
-    g.selectAll('.link')
-      .data(treeDataComputed.links())
-      .enter()
-      .append('path')
-      .attr('class', 'link')
-      .attr('d', createEdgeToEdgePath)
-      .attr('fill', 'none')
-      .attr('stroke', 'var(--color-border)')
-      .attr('stroke-width', 2)
-      .attr('opacity', 0.5);
-
-    if (showLinkedEdgesOnCanvas) {
-      const additionalLinks: Array<{ source: any; target: any }> = [];
-
-      treeDataComputed.descendants().forEach((node) => {
-        const project = node.data.data as Project;
-        if (!project?.linkedProjects || project.linkedProjects.length === 0) return;
-
-        project.linkedProjects.forEach((linkedTitle) => {
-          const targetNode = treeDataComputed
-            .descendants()
-            .find((entry) => entry.data.name === linkedTitle);
-          if (targetNode) {
-            additionalLinks.push({ source: node, target: targetNode });
-          }
-        });
-      });
-
-      const createLinkedPath = (source: any, target: any): string => {
-        const sourceY = source.y;
-        const targetY = target.y;
-        const sourceX = source.x;
-        const targetX = target.x;
-        const sourceType = source.data.type;
-        const targetType = target.data.type;
-        const sourceOffset = getNodeEdgeOffset(sourceType);
-        const targetOffset = getNodeEdgeOffset(targetType);
-        const goingRight = targetY > sourceY;
-
-        let x0: number;
-        let x1: number;
-        if (goingRight) {
-          x0 = sourceY + sourceOffset;
-          x1 = targetY - targetOffset;
-        } else {
-          x0 = sourceY - sourceOffset;
-          x1 = targetY + targetOffset;
-        }
-
-        const y0 = sourceX;
-        const y1 = targetX;
-        const mx = (x0 + x1) / 2;
-
-        return `M${x0},${y0} C${mx},${y0} ${mx},${y1} ${x1},${y1}`;
-      };
-
-      g.selectAll('.linked-link')
-        .data(additionalLinks)
-        .enter()
-        .append('path')
-        .attr('class', 'linked-link')
-        .attr('d', (entry) => createLinkedPath(entry.source, entry.target))
-        .attr('fill', 'none')
-        .attr('stroke', '#06b6d4')
-        .attr('stroke-width', 2)
-        .attr('stroke-dasharray', '5,5')
-        .attr('opacity', 0.6);
-    }
-
-    const node = g
-      .selectAll('.node')
-      .data(treeDataComputed.descendants())
-      .enter()
-      .append('g')
-      .attr('class', 'node')
-      .attr('transform', (entry) => `translate(${entry.y},${entry.x})`);
-
-    node
-      .filter((entry) => entry.data.type === 'project')
-      .append('rect')
-      .attr('x', -rectWidth / 2)
-      .attr('y', -rectHeight / 2)
-      .attr('width', rectWidth)
-      .attr('height', rectHeight)
-      .attr('rx', 8)
-      .attr('fill', (entry) => {
-        const project = entry.data.data as Project;
-        return statusColors[project.status as keyof typeof statusColors] || '#6b7280';
-      })
-      .attr('stroke', '#06b6d4')
-      .attr('stroke-width', 2)
-      .attr('opacity', 0.8)
-      .style('cursor', 'pointer')
-      .on('mouseenter', function (event, entry) {
-        if (deviceType !== 'desktop') return;
-        select(this).attr('opacity', 1).attr('stroke-width', 3);
-        const project = entry.data.data as Project;
-        setTooltip({
-          visible: true,
-          x: event.pageX,
-          y: event.pageY,
-          content: project,
-          type: 'project',
-        });
-      })
-      .on('mouseleave', function () {
-        if (deviceType !== 'desktop') return;
-        select(this).attr('opacity', 0.8).attr('stroke-width', 2);
-        setTooltip((previous) => ({ ...previous, visible: false }));
-      })
-      .on('click', (event, entry) => {
-        const project = entry.data.data as Project;
-        setSelectedProject(project);
-
-        if (deviceType === 'tablet') {
-          setTooltip({
-            visible: true,
-            x: event.pageX,
-            y: event.pageY,
-            content: project,
-            type: 'project',
-          });
-          setTimeout(() => {
-            setTooltip((previous) => ({ ...previous, visible: false }));
-          }, 3000);
-        }
-      })
-      .on('dblclick', (_event, entry) => {
-        const project = entry.data.data as Project;
-        setFocusTitle((previous) => (previous === project.title ? null : project.title));
-      });
-
-    const versionNodes = node.filter((entry) => entry.data.type === 'version');
-
-    if (deviceType === 'tablet') {
-      versionNodes
-        .append('circle')
-        .attr('r', touchTargetSize / 2)
-        .attr('fill', 'transparent')
-        .style('cursor', 'pointer')
-        .on('click', (event, entry) => {
-          const versionData = entry.data.data as {
-            version: string;
-            releaseStatus: ReleaseStatus;
-            items?: string[];
-          };
-          const parentProject = entry.parent?.data.data as Project | undefined;
-          if (!parentProject) return;
-
-          setSelectedVersion({
-            projectTitle: parentProject.title,
-            version: versionData.version,
-            releaseStatus: versionData.releaseStatus,
-            items: versionData.items,
-          });
-          setTooltip({
-            visible: true,
-            x: event.pageX,
-            y: event.pageY,
-            content: versionData,
-            type: 'version',
-          });
-          setTimeout(() => {
-            setTooltip((previous) => ({ ...previous, visible: false }));
-          }, 3000);
-        });
-    }
-
-    versionNodes
-      .append('circle')
-      .attr('r', nodeRadius - (deviceType === 'tablet' ? 3 : 4))
-      .attr('fill', (entry) => {
-        const versionData = entry.data.data as {
-          version: string;
-          releaseStatus: ReleaseStatus;
-          items?: string[];
-        };
-        return releaseStatusColor(versionData.releaseStatus);
-      })
-      .attr('stroke', (entry) => {
-        const versionData = entry.data.data as {
-          version: string;
-          releaseStatus: ReleaseStatus;
-          items?: string[];
-        };
-        return releaseStatusColor(versionData.releaseStatus);
-      })
-      .attr('stroke-width', 2)
-      .style('cursor', 'pointer')
-      .style('pointer-events', deviceType === 'tablet' ? 'none' : 'all')
-      .on('mouseenter', function (event, entry) {
-        if (deviceType !== 'desktop') return;
-
-        select(this).attr('r', nodeRadius);
-        const versionData = entry.data.data as {
-          version: string;
-          releaseStatus: ReleaseStatus;
-          items?: string[];
-        };
-        setTooltip({
-          visible: true,
-          x: event.pageX,
-          y: event.pageY,
-          content: versionData,
-          type: 'version',
-        });
-      })
-      .on('mouseleave', function () {
-        if (deviceType !== 'desktop') return;
-
-        select(this).attr('r', nodeRadius - 4);
-        setTooltip((previous) => ({ ...previous, visible: false }));
-      })
-      .on('click', (_event, entry) => {
-        if (deviceType !== 'desktop') return;
-
-        const versionData = entry.data.data as {
-          version: string;
-          releaseStatus: ReleaseStatus;
-          items?: string[];
-        };
-        const parentProject = entry.parent?.data.data as Project | undefined;
-        if (!parentProject) return;
-
-        setSelectedVersion({
-          projectTitle: parentProject.title,
-          version: versionData.version,
-          releaseStatus: versionData.releaseStatus,
-          items: versionData.items,
-        });
-      });
-
-    node
-      .filter((entry) => entry.data.type === 'root')
-      .append('circle')
-      .attr('r', nodeRadius)
-      .attr('fill', '#06b6d4')
-      .attr('stroke', '#0a0a0a')
-      .attr('stroke-width', 3);
-
-    node
-      .append('text')
-      .attr('dy', (entry) => {
-        if (entry.data.type === 'project') return 4;
-        if (entry.data.type === 'root') return deviceType === 'tablet' ? -18 : -20;
-        return deviceType === 'tablet' ? 22 : 25;
-      })
-      .attr('text-anchor', 'middle')
-      .text((entry) => entry.data.name)
-      .attr('fill', (entry) => {
-        if (entry.data.type === 'root') return '#06b6d4';
-        if (entry.data.type === 'project') return '#f9fafb';
-        if (entry.data.type === 'version') {
-          const versionData = entry.data.data as { releaseStatus: ReleaseStatus };
-          return releaseStatusColor(versionData.releaseStatus);
-        }
-        return 'var(--color-text-primary)';
-      })
-      .attr('font-weight', (entry) => (entry.data.type === 'root' ? 'bold' : 'normal'))
-      .attr('font-size', (entry) => {
-        const sizeMultiplier = deviceType === 'tablet' ? 0.85 : 1;
-        if (entry.data.type === 'root') return `${16 * sizeMultiplier}px`;
-        if (entry.data.type === 'project') return `${12 * sizeMultiplier}px`;
-        return `${11 * sizeMultiplier}px`;
-      })
-      .style('pointer-events', 'none')
-      .style('user-select', 'none');
-
-    const zoomBehavior = zoom<SVGSVGElement, unknown>()
-      .scaleExtent(deviceType === 'tablet' ? [0.5, 2] : [0.1, 3])
-      .on('zoom', (event) => {
-        g.attr('transform', event.transform);
-      });
-
-    svg.call(zoomBehavior as any);
-
-    const initialTransform = zoomIdentity.translate(centerX, centerY).scale(scale);
-    zoomBehaviorRef.current = zoomBehavior;
-    initialTransformRef.current = initialTransform;
-    svg.call(zoomBehavior.transform as any, initialTransform);
-  }, [projects, deviceType, visibleProjects, showLinkedEdgesOnCanvas, focusTitle, showVersionNodes]);
-
-  const relatedProjects = selectedProject?.linkedProjects
-    ?.map((title) => projectLookup.get(title))
-    .filter((project): project is Project => !!project);
+  const hasNode = (title: string) => roadmapByTitle.has(title);
 
   return (
-    <div className="relative">
-      <div className="glass-toolbar relative z-20 mb-4 rounded-2xl p-4">
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-          <div className="flex-1">
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t.searchPlaceholder}
-              list="projects-focus-list"
-              className="w-full rounded-xl border border-cyan-300/20 bg-white/[0.04] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none transition focus:border-primary-400"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setAdvancedOpen((previous) => !previous)}
-              className="rounded-xl border border-cyan-300/20 bg-white/[0.03] px-3 py-2 text-xs text-[var(--color-text-secondary)] transition hover:border-primary-400/70 hover:text-primary-300"
-            >
-              {advancedOpen ? t.hideTools : t.tools}
-            </button>
-            <button
-              onClick={resetView}
-              className="rounded-xl border border-cyan-300/20 bg-white/[0.03] px-3 py-2 text-xs text-[var(--color-text-secondary)] transition hover:border-primary-400/70 hover:text-primary-300"
-            >
-              {t.resetView}
-            </button>
-            {hasActiveFilters && (
-              <button
-                onClick={resetFilters}
-                className="rounded-xl border border-cyan-300/20 bg-white/[0.03] px-3 py-2 text-xs text-[var(--color-text-secondary)] transition hover:border-primary-400/70 hover:text-primary-300"
-              >
-                {t.clear}
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[var(--color-text-secondary)]">
-          <span>
-            {t.visible}: {navigatorResult.visibleCount}/{navigatorResult.totalCount}
-          </span>
-          <span>
-            {t.matched}: {navigatorResult.matchedCount}
-          </span>
-          {searchActive && navigatorResult.primaryMatchedCount > 0 && (
-            <span>
-              {t.focusCompact}: {navigatorResult.primaryMatchedCount}
-            </span>
-          )}
-          {focusTitle && (
-            <span>
-              {t.focusNodes}: {navigatorResult.focusCount}
-            </span>
-          )}
-          {!showVersionNodes && <span>{t.versionsHidden}</span>}
-        </div>
-
-        {advancedOpen && (
-          <div className="mt-3 grid gap-3 border-t border-cyan-300/15 pt-3 lg:grid-cols-3">
-            <div className="space-y-2">
-              <span className="text-xs text-[var(--color-text-secondary)]">{t.category}</span>
-              <div className="flex flex-wrap items-center gap-2">
-                {(['all', 'projects', 'contributing'] as const).map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setCategoryFilter(category)}
-                    className={`rounded-full border px-3 py-1 text-xs transition ${
-                      categoryFilter === category
-                        ? 'border-primary-400 bg-primary-400/20 text-primary-300'
-                        : 'border-cyan-300/20 bg-white/[0.03] text-[var(--color-text-secondary)] hover:border-primary-400/60'
-                    }`}
-                  >
-                    {t.categoryOptions[category]}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <span className="text-xs text-[var(--color-text-secondary)]">{t.status}</span>
-              <div className="flex flex-wrap items-center gap-2">
-                {PROJECT_STATUS_VALUES.map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => toggleStatus(status)}
-                    className={`rounded-full border px-3 py-1 text-xs transition ${
-                      selectedStatuses.includes(status)
-                        ? 'border-primary-400 bg-primary-400/20 text-primary-300'
-                        : 'border-cyan-300/20 bg-white/[0.03] text-[var(--color-text-secondary)] hover:border-primary-400/60'
-                    }`}
-                  >
-                    {t.statusOptions[status]}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <FocusProjectSelect
-                options={sortedProjectTitles}
-                value={focusTitle}
-                onChange={setFocusTitle}
-                allLabel={t.focusAllBranches}
-                ariaLabel={t.focusAllBranches}
-              />
-
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  aria-pressed={showLinkedProjects}
-                  onClick={() => setShowLinkedProjects((previous) => !previous)}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition ${
-                    showLinkedProjects
-                      ? 'border-primary-400 bg-primary-400/20 text-primary-300'
-                      : 'border-cyan-300/20 bg-white/[0.03] text-[var(--color-text-secondary)] hover:border-primary-400/60'
-                  }`}
-                >
-                  <span
-                    className={`h-2 w-2 rounded-full ${
-                      showLinkedProjects ? 'bg-primary-300' : 'bg-[var(--color-text-secondary)]/50'
-                    }`}
-                  />
-                  {t.linkedEdges}
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={showVersionNodes}
-                  onClick={() => setShowVersionNodes((previous) => !previous)}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition ${
-                    showVersionNodes
-                      ? 'border-primary-400 bg-primary-400/20 text-primary-300'
-                      : 'border-cyan-300/20 bg-white/[0.03] text-[var(--color-text-secondary)] hover:border-primary-400/60'
-                  }`}
-                >
-                  <span
-                    className={`h-2 w-2 rounded-full ${
-                      showVersionNodes ? 'bg-primary-300' : 'bg-[var(--color-text-secondary)]/50'
-                    }`}
-                  />
-                  {t.versionNodes}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <datalist id="projects-focus-list">
-        {sortedProjectTitles.map((title) => (
-          <option key={title} value={title} />
-        ))}
-      </datalist>
-
-      {visibleProjects.length === 0 && (
-        <div className="mb-4 rounded-xl border border-cyan-300/20 bg-white/[0.03] p-6 text-center backdrop-blur-xl">
+    <div className="grid grid-cols-12 gap-4">
+      {roots.length === 0 ? (
+        <div className="col-span-12 rounded-2xl border border-cyan-300/20 bg-white/[0.03] p-8 text-center">
           <p className="text-sm text-[var(--color-text-secondary)]">{t.noNodesMatch}</p>
         </div>
-      )}
-
-      <div ref={containerRef} className="roadmap-visualization relative z-0 overflow-visible bg-[var(--color-bg)]">
-        <svg ref={svgRef} className="w-full overflow-visible" />
-      </div>
-
-      {tooltip.visible && tooltip.content && (
-        <div
-          className="fixed z-50 max-w-sm rounded-lg border border-primary-400 bg-[var(--color-bg-secondary)] p-4 shadow-xl"
-          style={{
-            left: `${tooltip.x + 20}px`,
-            top: `${tooltip.y - 20}px`,
-            pointerEvents: 'none',
-          }}
-        >
-          {tooltip.type === 'project' ? (
-            <div>
-              <h3 className="mb-2 font-bold text-primary-400">{(tooltip.content as Project).title}</h3>
-              <p className="mb-2 text-sm text-[var(--color-text-secondary)]">
-                {(tooltip.content as Project).description}
-              </p>
-              <div className="mb-2 flex flex-wrap gap-1">
-                {(tooltip.content as Project).tags.map((tag) => (
-                  <span key={tag} className="rounded bg-[var(--color-bg)] px-2 py-1 text-xs">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              {(tooltip.content as Project).version && (
-                <p className="text-xs text-primary-400">v{(tooltip.content as Project).version}</p>
-              )}
-              <p className="mt-2 text-xs italic text-[var(--color-text-secondary)]">
-                Click: details • Double click: focus branch
-              </p>
-            </div>
-          ) : (
-            <div>
-              <div className="mb-2 flex items-center gap-2">
-                <h4 className="font-bold text-primary-400">
-                  v{(tooltip.content as { version: string }).version}
-                </h4>
-                <span
-                  className={`rounded px-2 py-1 text-xs ${releaseStatusBadgeClass(
-                    (tooltip.content as { releaseStatus: ReleaseStatus }).releaseStatus,
-                  )}`}
+      ) : (
+        <div className="col-span-12 grid grid-cols-12 gap-4">
+          <div className="col-span-12">
+            <div className="overflow-hidden">
+              <div
+                className="roadmap-canvas-viewport"
+                data-ready={isDiagramReady ? 'true' : 'false'}
+                style={{
+                  width: '100%',
+                  maxWidth: scaledCanvasWidth,
+                  height: scaledCanvasHeight,
+                  margin: '0 auto',
+                  overflow: 'visible',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'relative',
+                    width: DIAGRAM_CANVAS.width,
+                    height: DIAGRAM_CANVAS.height + canvasVerticalPadding,
+                    transform: `scale(${diagramScale})`,
+                    transformOrigin: 'top left',
+                  }}
                 >
-                  {releaseStatusLabel(
-                    (tooltip.content as { releaseStatus: ReleaseStatus }).releaseStatus,
-                  )}
-                </span>
-              </div>
-              {(tooltip.content as { items?: string[]; releaseStatus: ReleaseStatus }).items &&
-                (tooltip.content as { items?: string[]; releaseStatus: ReleaseStatus }).items!
-                  .length > 0 &&
-                ((tooltip.content as { releaseStatus: ReleaseStatus }).releaseStatus === 'close' ? (
-                  <p className="text-sm text-[var(--color-text-secondary)]">
-                    {(tooltip.content as { items: string[] }).items.join(' ')}
-                  </p>
-                ) : (
-                  <ul className="space-y-1 text-sm">
-                    {(tooltip.content as { items: string[] }).items.map((item, index) => (
-                      <li key={index} className="text-[var(--color-text-secondary)]">
-                        • {item}
-                      </li>
-                    ))}
-                  </ul>
-                ))}
-            </div>
-          )}
-        </div>
-      )}
+                  <div style={{ position: 'absolute', inset: 0, padding: '32px 0 60px' }}>
+                    {hasNode('contributing') && renderDiagramLine(500, 70, { height: 380 })}
+                  {hasNode('contributing') &&
+                    renderDiagramNode({
+                      title: 'contributing',
+                      variant: 'contribution',
+                      left: 400,
+                      top: 20,
+                      width: 200,
+                      height: 50,
+                      interactive: false,
+                    })}
 
-      {selectedVersion && (
-        <div
-          className="glass-overlay fixed inset-0 z-50 flex items-center justify-center"
-          onClick={() => setSelectedVersion(null)}
-        >
-          <div
-            className="glass-panel ui-scrollbar m-4 max-h-[80vh] max-w-xl overflow-y-auto rounded-2xl p-6"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mb-4 flex items-start justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-primary-400">{selectedVersion.projectTitle}</h2>
-                <div className="mt-2 flex items-center gap-2">
-                  <h3 className="text-xl font-bold">v{selectedVersion.version}</h3>
-                  <span
-                    className={`rounded px-2 py-1 text-xs ${releaseStatusBadgeClass(
-                      selectedVersion.releaseStatus,
-                    )}`}
-                  >
-                    {releaseStatusLabel(selectedVersion.releaseStatus)}
-                  </span>
+                  {hasNode('hyprview') && renderDiagramLine(500, 120, { width: 100 })}
+                  {hasNode('hyprview') &&
+                    renderDiagramNode({ title: 'hyprview', variant: 'project', left: 600, top: 100, width: 100, height: 46 })}
+
+                  {hasNode('google') && hasNode('google-cloud-rust') && (
+                    <>
+                      {renderDiagramLine(460, 185, { width: 40 })}
+                      {renderGroupBox(280, 140, 200, 90)}
+                      {renderDiagramNode({
+                        title: 'google',
+                        variant: 'label',
+                        left: 340,
+                        top: 128,
+                        width: 80,
+                        height: 28,
+                        interactive: false,
+                      })}
+                      {renderDiagramNode({
+                        title: 'google-cloud-rust',
+                        variant: 'project',
+                        left: 300,
+                        top: 165,
+                        width: 160,
+                        height: 46,
+                      })}
+                    </>
+                  )}
+
+                  {hasNode('rust') && hasNode('rust-analyzer') && (
+                    <>
+                      {renderDiagramLine(445, 325, { width: 55 })}
+                      {renderGroupBox(295, 280, 170, 90)}
+                      {renderDiagramNode({ title: 'rust', variant: 'label', left: 345, top: 268, width: 60, height: 28 })}
+                      {renderDiagramNode({
+                        title: 'rust-analyzer',
+                        variant: 'project',
+                        left: 315,
+                        top: 305,
+                        width: 130,
+                        height: 46,
+                      })}
+                    </>
+                  )}
+
+                  {renderDiagramNode({
+                    title: 'vremyavnikuda',
+                    label: 'vremyavnikuda',
+                    variant: 'root',
+                    left: 390,
+                    top: 450,
+                    width: 220,
+                    height: 50,
+                    interactive: false,
+                  })}
+
+                  {renderDiagramLine(500, 500, { height: 26 })}
+                  {renderDiagramLine(250, 526, { width: 500 })}
+                  {renderDiagramLine(250, 526, { height: 24 })}
+                  {renderDiagramLine(750, 526, { height: 24 })}
+
+                  {hasNode('projects') &&
+                    renderDiagramNode({
+                      title: 'projects',
+                      variant: 'contribution',
+                      left: 160,
+                      top: 550,
+                      width: 180,
+                      height: 50,
+                      interactive: false,
+                    })}
+                  {hasNode('Shikou Core') &&
+                    renderDiagramNode({
+                      title: 'Shikou Core',
+                      label: 'shikou core',
+                      variant: 'contribution',
+                      left: 660,
+                      top: 550,
+                      width: 180,
+                      height: 50,
+                    })}
+
+                  {hasNode('projects') && renderDiagramLine(250, 600, { height: 386 })}
+
+                  {hasNode('Personal Blog') && (
+                    <>
+                      {renderDiagramLine(250, 670, { width: 70 })}
+                      {renderDiagramNode({ title: 'Personal Blog', variant: 'project', left: 320, top: 650, width: 140, height: 46 })}
+                    </>
+                  )}
+
+                  {hasNode('sysinfo_utils') && (
+                    <>
+                      {renderDiagramLine(250, 740, { width: 70 })}
+                      {renderDiagramNode({ title: 'sysinfo_utils', variant: 'project', left: 320, top: 720, width: 140, height: 46 })}
+                    </>
+                  )}
+
+                  {hasNode('windows') && hasNode('spath') && (
+                    <>
+                      {renderDiagramLine(185, 740, { width: 65 })}
+                      {renderGroupBox(50, 700, 155, 215)}
+                      {renderDiagramNode({
+                        title: 'windows',
+                        variant: 'label',
+                        left: 85,
+                        top: 688,
+                        width: 78,
+                        height: 28,
+                        interactive: false,
+                      })}
+                      {renderDiagramNode({ title: 'spath', variant: 'project', left: 65, top: 720, width: 125, height: 46 })}
+                    </>
+                  )}
+
+                  {hasNode('spath_cli') && hasNode('spath_gui') && (
+                    <>
+                      {renderGroupBox(60, 780, 135, 120)}
+                      {renderDiagramNode({ title: 'spath_cli', variant: 'project', left: 75, top: 795, width: 105, height: 46 })}
+                      {renderDiagramNode({ title: 'spath_gui', variant: 'project', left: 75, top: 850, width: 105, height: 46 })}
+                    </>
+                  )}
+
+                  {hasNode('anchora') && (
+                    <>
+                      {renderDiagramLine(200, 986, { width: 50 })}
+                      {renderDiagramNode({ title: 'anchora', variant: 'project', left: 100, top: 966, width: 100, height: 46 })}
+                    </>
+                  )}
+
+                  {hasNode('Shikou Core') && renderDiagramLine(750, 600, { height: 270 })}
+
+                  {hasNode('hyprshot-rs') && (
+                    <>
+                      {renderDiagramLine(675, 720, { width: 75 })}
+                      {renderGroupBox(540, 680, 150, 140)}
+                      {renderDiagramNode({ title: 'hyprshot-rs', variant: 'label', left: 565, top: 668, width: 108, height: 28 })}
+                    </>
+                  )}
+
+                  {hasNode('grim-rs') &&
+                    renderDiagramNode({ title: 'grim-rs', variant: 'project', left: 555, top: 700, width: 120, height: 46 })}
+                  {hasNode('slurp-rs') &&
+                    renderDiagramNode({ title: 'slurp-rs', variant: 'project', left: 555, top: 760, width: 120, height: 46 })}
+
+                  {hasNode('ink2tex') && (
+                    <>
+                      {renderDiagramLine(660, 870, { width: 90 })}
+                      {renderDiagramNode({ title: 'ink2tex', variant: 'project', left: 560, top: 850, width: 100, height: 46 })}
+                    </>
+                  )}
+
+                  {hasNode('rust-fmt') && (
+                    <>
+                      {renderDiagramLine(750, 670, { width: 50 })}
+                      {renderDiagramNode({ title: 'rust-fmt', variant: 'project', left: 800, top: 650, width: 100, height: 46 })}
+                    </>
+                  )}
+                  </div>
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedVersion(null)}
-                className="text-2xl text-[var(--color-text-secondary)] hover:text-primary-400"
-              >
-                ✕
-              </button>
             </div>
-
-            {selectedVersion.items && selectedVersion.items.length > 0 ? (
-              <div>
-                <h4 className="mb-3 text-lg font-bold text-primary-400">Changes</h4>
-                {selectedVersion.releaseStatus === 'close' ? (
-                  <p className="text-sm text-[var(--color-text)]">{selectedVersion.items.join(' ')}</p>
-                ) : (
-                  <ul className="space-y-2">
-                    {selectedVersion.items.map((item, index) => (
-                      <li key={index} className="text-sm text-[var(--color-text)]">
-                        • {item}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ) : (
-              <p className="text-sm italic text-[var(--color-text-secondary)]">
-                No detailed changelog available for this version.
-              </p>
-            )}
           </div>
         </div>
       )}
 
-      {selectedProject && (
-        <div
-          className="glass-overlay fixed inset-0 z-50 flex items-center justify-center"
-          onClick={() => setSelectedProject(null)}
+      <div
+        className="pointer-events-none fixed inset-y-0 right-0 z-50 flex items-start"
+        style={inspectorShellStyle}
+      >
+        <aside
+          ref={inspectorRef}
+          className={`ui-scrollbar overflow-y-auto rounded-2xl border border-cyan-300/20 bg-slate-950/90 p-4 shadow-[0_16px_44px_rgba(2,6,23,0.64)] backdrop-blur-xl transition-all duration-300 ${
+            inspectorOpen ? 'pointer-events-auto translate-x-0 opacity-100' : 'pointer-events-none translate-x-[110%] opacity-0'
+          }`}
+          style={inspectorPanelStyle}
         >
-          <div
-            className="glass-panel ui-scrollbar m-4 max-h-[80vh] max-w-2xl overflow-y-auto rounded-2xl p-6"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <h2 className="text-3xl font-bold text-primary-400">{selectedProject.title}</h2>
-              <button
-                onClick={() => setSelectedProject(null)}
-                className="text-2xl text-[var(--color-text-secondary)] hover:text-primary-400"
-              >
-                ✕
-              </button>
-            </div>
+          <div className="space-y-3">
+            <section className="rounded-2xl border border-cyan-300/20 bg-white/[0.03] p-4">
+              {!selectedProjectTitle && (
+                <p className="text-sm text-[var(--color-text-secondary)]">
+                  {lang === 'ja'
+                    ? 'ノードを選択すると、ここに詳細が表示されます。'
+                    : 'Select a node to inspect details.'}
+                </p>
+              )}
 
-            <p className="mb-4 text-[var(--color-text)]">{selectedProject.description}</p>
+              {selectedProjectTitle && detailsState === 'loading' && !selectedProject && (
+                <p className="text-sm text-[var(--color-text-secondary)]">
+                  {lang === 'ja' ? 'プロジェクト情報を読み込み中...' : 'Loading project details...'}
+                </p>
+              )}
 
-            <div className="mb-4 flex flex-wrap gap-2">
-              {selectedProject.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded bg-[var(--color-bg-secondary)] px-2 py-1 text-xs"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
+              {selectedProjectTitle && detailsState === 'error' && !selectedProject && (
+                <p className="text-sm text-rose-300">
+                  {lang === 'ja'
+                    ? 'プロジェクト情報の読み込みに失敗しました。'
+                    : 'Failed to load project details.'}
+                </p>
+              )}
 
-            {selectedProject.version && (
-              <p className="mb-4 text-sm text-primary-400">Current Version: v{selectedProject.version}</p>
+              {selectedProject && (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h4 className="text-lg font-bold text-primary-300">{selectedProject.title}</h4>
+                    <span
+                      className={`rounded-full border px-2 py-0.5 text-xs ${
+                        statusBadgeClass[statusToKnown(selectedProject.status)]
+                      }`}
+                    >
+                      {t.statusOptions[statusToKnown(selectedProject.status)]}
+                    </span>
+                    {selectedProject.version && (
+                      <span className="rounded-full border border-cyan-300/30 px-2 py-0.5 text-xs text-cyan-200">
+                        v{selectedProject.version}
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-sm text-[var(--color-text-secondary)]">{selectedProject.description}</p>
+
+                  <div className="flex flex-wrap items-center gap-3 text-sm">
+                    {selectedProject.github && (
+                      <a
+                        href={selectedProject.github}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-300 hover:underline"
+                      >
+                        GitHub
+                      </a>
+                    )}
+
+                    {selectedProject.link && (
+                      <a
+                        href={selectedProject.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-300 hover:underline"
+                      >
+                        {lang === 'ja' ? 'リンク' : 'Visit'}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {selectedProject?.roadmap && selectedProject.roadmap.length > 0 && (
+              <section className="rounded-2xl border border-cyan-300/20 bg-white/[0.03] p-4">
+                <h4 className="mb-3 text-sm font-semibold text-primary-300">
+                  {lang === 'ja' ? 'バージョン履歴' : 'Version Timeline'}
+                </h4>
+                <div className="space-y-2">
+                  {sortRoadmapByVersionDesc(selectedProject.roadmap).map((entry) => {
+                    const isExpanded =
+                      selectedVersion?.projectTitle === selectedProject.title &&
+                      selectedVersion.version === entry.version;
+
+                    return (
+                      <div
+                        key={`${selectedProject.title}-${entry.version}`}
+                        className="overflow-hidden rounded-lg border border-cyan-300/20 bg-black/15"
+                      >
+                        <button
+                          onClick={() =>
+                            selectVersion({
+                              projectTitle: selectedProject.title,
+                              version: entry.version,
+                              releaseStatus: entry.releaseStatus,
+                              items: entry.items,
+                            })
+                          }
+                          className="w-full px-3 py-2 text-left text-sm transition hover:border-primary-400/60"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="font-mono text-cyan-100">v{entry.version}</span>
+                            <span className="text-xs" style={{ color: versionColor(entry.releaseStatus) }}>
+                              {versionLabel(entry.releaseStatus, lang)}
+                            </span>
+                          </div>
+                        </button>
+
+                        {isExpanded && (
+                          <div className="border-t border-cyan-300/15 px-3 pb-3 pt-2">
+                            {entry.items && entry.items.length > 0 ? (
+                              <ul className="space-y-1 text-sm text-[var(--color-text-secondary)]">
+                                {entry.items.map((item, index) => (
+                                  <li key={`${entry.version}-${index}`}>• {item}</li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-sm text-[var(--color-text-secondary)]">
+                                {lang === 'ja'
+                                  ? 'このバージョンの詳細項目はありません。'
+                                  : 'No detailed items for this version.'}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
             )}
 
-            <div className="mb-6 flex flex-wrap gap-4">
-              <button
-                onClick={() =>
-                  setFocusTitle((previous) =>
-                    previous === selectedProject.title ? null : selectedProject.title,
-                  )
-                }
-                className="text-primary-400 hover:underline"
-              >
-                {focusTitle === selectedProject.title ? 'Unfocus branch' : 'Focus branch'}
-              </button>
-              {selectedProject.github && (
-                <a
-                  href={selectedProject.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary-400 hover:underline"
-                >
-                  GitHub →
-                </a>
-              )}
-              {selectedProject.link && (
-                <a
-                  href={selectedProject.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary-400 hover:underline"
-                >
-                  Visit →
-                </a>
-              )}
-            </div>
-
             {relatedProjects && relatedProjects.length > 0 && (
-              <div className="mb-6">
-                <h3 className="mb-3 text-xl font-bold text-primary-400">Related</h3>
+              <section className="rounded-2xl border border-cyan-300/20 bg-white/[0.03] p-4">
+                <h4 className="mb-2 text-sm font-semibold text-primary-300">
+                  {lang === 'ja' ? '関連プロジェクト' : 'Related Projects'}
+                </h4>
                 <div className="flex flex-wrap gap-2">
-                  {relatedProjects.map((project) => (
+                  {relatedProjects.map((entry) => (
                     <button
-                      key={project.id}
-                      onClick={() => {
-                        setSelectedProject(project);
-                        setFocusTitle(project.title);
-                      }}
-                      className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-3 py-1 text-xs text-[var(--color-text-secondary)] transition hover:border-primary-400/60 hover:text-primary-300"
+                      key={entry.id}
+                      onClick={() => selectProject(entry.title)}
+                      className="rounded-full border border-cyan-300/20 px-3 py-1 text-xs text-[var(--color-text-secondary)] transition hover:border-primary-400/60 hover:text-primary-300"
                     >
-                      {project.title}
+                      {entry.title}
                     </button>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {selectedProject.roadmap && selectedProject.roadmap.length > 0 && (
-              <div>
-                <h3 className="mb-4 text-xl font-bold text-primary-400">Roadmap</h3>
-                <div className="space-y-4">
-                  {sortRoadmapByVersionDesc(selectedProject.roadmap).map((milestone) => (
-                    <div
-                      key={milestone.version}
-                      className="rounded-lg border border-[var(--color-border)] p-4"
-                    >
-                      <h4 className="mb-2 flex items-center gap-2 text-lg font-bold">
-                        v{milestone.version}
-                        <span
-                          className={`rounded px-2 py-1 text-xs ${releaseStatusBadgeClass(
-                            milestone.releaseStatus,
-                          )}`}
-                        >
-                          {releaseStatusLabel(milestone.releaseStatus)}
-                        </span>
-                      </h4>
-                      {milestone.items && milestone.items.length > 0 &&
-                        (milestone.releaseStatus === 'close' ? (
-                          <p className="text-sm text-[var(--color-text-secondary)]">
-                            {milestone.items.join(' ')}
-                          </p>
-                        ) : (
-                          <ul className="space-y-1">
-                            {milestone.items.map((item, index) => (
-                              <li key={index} className="text-sm text-[var(--color-text-secondary)]">
-                                • {item}
-                              </li>
-                            ))}
-                          </ul>
-                        ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
+              </section>
             )}
           </div>
-        </div>
-      )}
+        </aside>
+      </div>
     </div>
   );
 }

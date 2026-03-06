@@ -12,8 +12,6 @@ const sortedAchievements = achievements.sort((a, b) =>
   b.data.date.valueOf() - a.data.date.valueOf()
 );
 
-const achievementsData = sortedAchievements.map(({ data }) => data);
-
 const title = '実績';
 const description = '私の実績とサーティフィケート';
 ---
@@ -89,8 +87,8 @@ const description = '私の実績とサーティフィケート';
     }
   </style>
 
-  <script type="application/json" id="achievements-data">
-    {JSON.stringify(achievementsData)}
+  <script is:inline type="application/json" id="achievements-data">
+    {JSON.stringify(sortedAchievements.map(({ data }) => data))}
   </script>
   <script is:inline>
     const achievements = JSON.parse(document.getElementById('achievements-data')?.textContent ?? '[]');

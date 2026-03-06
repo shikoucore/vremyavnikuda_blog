@@ -19,12 +19,15 @@
 
   html {
     scroll-behavior: smooth;
+    overflow-x: clip;
   }
 
   body {
     @apply text-[var(--color-text-primary)] bg-[var(--color-bg-primary)];
     @apply antialiased;
     font-family: 'Cascadia Code', 'Cascadia Mono', monospace;
+    overflow-x: clip;
+    max-width: 100%;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -77,6 +80,18 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.06);
     backdrop-filter: blur(18px) saturate(130%);
     -webkit-backdrop-filter: blur(18px) saturate(130%);
+  }
+
+  @media (max-width: 1023px) {
+    .roadmap-canvas-viewport[data-ready='false'] {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .roadmap-canvas-viewport[data-ready='true'] {
+      opacity: 1;
+      transition: opacity 0.12s ease;
+    }
   }
 
   .ui-scrollbar {

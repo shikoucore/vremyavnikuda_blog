@@ -40,15 +40,6 @@ const allPosts = (await getCollection('blog'))
               <p class="text-[var(--color-text-secondary)] mb-4">
                 {post.data.description}
               </p>
-              {post.data.tags.length > 0 && (
-                <div class="flex gap-2">
-                  {post.data.tags.map((tag) => (
-                    <span class="text-xs px-2 py-1 bg-[var(--color-bg-secondary)] rounded">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
             </a>
           </article>
         ))}

@@ -3,30 +3,13 @@ import BaseLayout from '@layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 import { getLangFromUrl, useTranslations } from '../i18n/utils';
 import ProjectsRoadmapVisualization from '@components/ProjectsRoadmapVisualization';
-import MobileProjectList from '@components/MobileProjectList';
+import { buildProjectRoadmapNodes, getProjectsEntriesForLang } from '../lib/projectsData';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 
-const projectsCollection = (await getCollection('projects'))
-  .filter(project => project.data.lang === lang)
-  .sort((a, b) => (b.data.featured ? 1 : 0) - (a.data.featured ? 1 : 0));
-
-const projects = projectsCollection.map(project => ({
-  id: project.id,
-  title: project.data.title,
-  description: project.data.description,
-  version: project.data.version,
-  status: project.data.status,
-  tags: project.data.tags,
-  github: project.data.github,
-  link: project.data.link,
-  projectType: project.data.projectType,
-  category: project.data.category,
-  parentProject: project.data.parentProject,
-  linkedProjects: project.data.linkedProjects,
-  roadmap: project.data.roadmap,
-}));
+const projects = buildProjectRoadmapNodes(getProjectsEntriesForLang(await getCollection('projects'), lang));
+const detailsUrl = `/projects-data/${lang}.json`;
 ---
 
 <BaseLayout title={`${t('projects.title')} - vremyavnikuda`} description={t('projects.description')}>
@@ -34,14 +17,7 @@ const projects = projectsCollection.map(project => ({
     {projects.length === 0 ? (
       <p class="text-[var(--color-text-secondary)]">{t('projects.noProjects')}</p>
     ) : (
-      <>
-        <div class="md:hidden">
-          <MobileProjectList projects={projects} lang={lang} client:media="(max-width: 767px)" />
-        </div>
-        <div class="hidden md:block">
-          <ProjectsRoadmapVisualization projects={projects} lang={lang} client:media="(min-width: 768px)" />
-        </div>
-      </>
+      <ProjectsRoadmapVisualization projects={projects} detailsUrl={detailsUrl} lang={lang} client:load />
     )}
   </div>
 </BaseLayout>
