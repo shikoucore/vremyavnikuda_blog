@@ -212,7 +212,7 @@
   }
 
   .prose th {
-    @apply px-3 py-2 text-left font-semibold;
+    @apply px-3 py-2 font-semibold;
     color: var(--color-text-primary);
     border-bottom: 1px solid rgba(34, 211, 238, 0.28);
   }
@@ -221,6 +221,21 @@
     @apply px-3 py-2 align-top;
     color: var(--color-text-secondary);
     border-bottom: 1px solid rgba(34, 211, 238, 0.14);
+  }
+
+  .prose th,
+  .prose td {
+    text-align: left;
+  }
+
+  .prose th[align="right"],
+  .prose td[align="right"] {
+    text-align: right;
+  }
+
+  .prose th[align="center"],
+  .prose td[align="center"] {
+    text-align: center;
   }
 
   .prose tbody tr:last-child td {
