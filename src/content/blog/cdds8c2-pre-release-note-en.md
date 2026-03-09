@@ -186,16 +186,16 @@ double new_weight = std::clamp(
 
 ### Remaining gaps
 
-- Validate no regressions on sparse regimes.
-- Expand statistical sampling to ≥10 seeds per setup.
-- Reduce size-specific tuning and move toward robust default behavior.
+- Regression checks for sparse regimes.
+- Expanded statistical sampling to ≥10 seeds per setup.
+- Less size-specific tuning and a more robust default behavior.
 
 ### Next release steps
 
-- Add seeds `200-210` for `n=2000, 2500, 3000`.
-- Report 95% confidence intervals.
-- Further formalize primal-dual/subgradient interpretation.
-- Evaluate adaptive bucket selection against manual tuning.
+- Additional seeds `200-210` for `n=2000, 2500, 3000`.
+- Reporting 95% confidence intervals.
+- Further formalization of the primal-dual/subgradient interpretation.
+- Comparison of adaptive bucket selection against manual tuning.
 
 ## Confirmed vs. hypothesis
 

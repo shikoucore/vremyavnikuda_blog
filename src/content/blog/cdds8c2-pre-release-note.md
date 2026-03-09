@@ -19,11 +19,11 @@ lang: ja
 
 回路検証、計画問題、暗号解析などの実応用では、相転移付近でソルバ性能が急激に落ちるため、この領域での挙動が重要になります。
 
-`m/n ≈ 4.2-4.5` の `Random 3-SAT` は、`stochastic local search (SLS)` にとって特に難しい領域です。ステップ予算（例: 180 flips）を固定すると、多くの手法は局所最適にとどまり、100% SAT に到達しません。
+`m/n ≈ 4.2-4.5` の `Random 3-SAT` は、`stochastic local search (SLS)` にとって特に難しい領域です。ステップ予算（例: 180 flips）を固定すると、多くの手法は局所最適にとどまり、全句 SAT には到達しません。
 
 `prototype algorithm 8C2` は CSAW の発想を拡張し、3つの要素を追加しています。具体的には、primal-dual に基づく句重みダイナミクス、問題サイズ/密度に応じた size/density-aware 動作、そして zero-break 候補の改善処理です。現時点の pre-release 実験では、固定予算下で probSAT および WalkSAT と比較して **+0.04-0.19%** の改善を確認しています。
 
-`n=3000`、`m≈12800` では `0.19%` の差が **約24句** の追加 SAT に相当し、hard 設定では実質的な差になります。
+`n=3000`、`m≈12800` では `0.19%` の差が **約24句** の追加 SAT に相当し、高難度設定では実質的な差になります。
 
 ## CNF 形式（Conjunctive Normal Form）
 
@@ -81,7 +81,7 @@ $$
 
 `make(v)` はフリップ後に SAT になる句数、`break(v)` は UNSAT へ落ちる句数です。`novelty(v)` は直近で使った変数への抑制です。`α`（`make_weight`）は make 報酬の強さ、`c_b`（`cb`）は break 罰則の形を調整します。`ε` は数値安定化のための小定数です。
 
-**特別ケース:** `break(v)=0` の候補は zero-break 集合からランダムに選び、free gain を取りこぼさないようにします。
+**特別ケース:** `break(v)=0` の候補は zero-break 集合からランダムに選び、無償改善を取りこぼさないようにします。
 
 ## Primal-Dual 句重み更新
 
@@ -182,16 +182,16 @@ double new_weight = std::clamp(
 
 ### 残課題
 
-- sparse 領域での回帰がないかを追加検証
-- 設定ごとの seed 数を増やして統計強化（≥10）
-- サイズ依存チューニングを減らし、より堅牢なデフォルト挙動へ寄せる
+- sparse 領域における回帰有無の検証
+- 各設定で seed を 10 以上に拡張した統計評価
+- サイズ依存チューニングの削減と、より堅牢なデフォルト挙動への移行
 
 ### 次リリースまでの作業
 
-- `n=2000/2500/3000` に対して seeds `200-210` を追加
-- 95% 信頼区間を報告
-- primal-dual と subgradient の対応をさらに整理
-- adaptive bucket 選択と手動チューニングを比較
+- `n=2000/2500/3000` に対する seeds `200-210` の追加
+- 95% 信頼区間の提示
+- primal-dual と subgradient の解釈整理
+- adaptive bucket 選択と手動チューニングの比較
 
 ## 確定事項と仮説
 
@@ -207,7 +207,7 @@ double new_weight = std::clamp(
 
 ## まとめ
 
-`prototype algorithm 8C2` は意図的な pre-release です。hard random 3-SAT での競争力はすでに確認できており、理論面と統計面の最終化を進めています。
+`prototype algorithm 8C2` は意図的な pre-release です。高難度 random 3-SAT 設定での競争力はすでに確認できており、理論面と統計面の最終化を進めています。
 
 ## 用語集
 
