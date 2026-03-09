@@ -1,0 +1,64 @@
+<svg viewBox="0 0 980 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Primal-Dual clause weight update</title>
+  <desc id="desc">dense-gated primal-dual 句重み更新（clipping と減衰ステップ）</desc>
+  <defs>
+    <marker id="arr" markerWidth="6" markerHeight="6" refX="5.5" refY="3" orient="auto">
+      <polygon points="0 0, 6 3, 0 6" fill="#22d3ee"/>
+    </marker>
+    <marker id="arrd" markerWidth="6" markerHeight="6" refX="5.5" refY="3" orient="auto">
+      <polygon points="0 0, 6 3, 0 6" fill="#94a3b8"/>
+    </marker>
+    <style>
+      .bg { fill: #020617; }
+      .txt { fill: #e2e8f0; font-family: 'Cascadia Code', 'JetBrains Mono', monospace; font-size: 14px; }
+      .small { fill: #94a3b8; font-family: 'Cascadia Code', 'JetBrains Mono', monospace; font-size: 12px; }
+      .c1 { fill: #083344; stroke: #22d3ee; stroke-width: 2; }
+      .c2 { fill: #052e2b; stroke: #34d399; stroke-width: 2; }
+      .c3 { fill: #312e81; stroke: #a78bfa; stroke-width: 2; }
+      .c4 { fill: #3f2a00; stroke: #f59e0b; stroke-width: 2; }
+      .c5 { fill: #1e293b; stroke: #64748b; stroke-width: 2; }
+      .line { fill: none; stroke: #22d3ee; stroke-width: 2.2; marker-end: url(#arr); }
+      .dash { fill: none; stroke: #94a3b8; stroke-width: 1.7; stroke-dasharray: 6 6; marker-end: url(#arrd); }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="980" height="620"/>
+
+  <rect class="c1" x="330" y="26" width="320" height="72" rx="10"/>
+  <text class="txt" x="490" y="54" text-anchor="middle">Dense gate</text>
+  <text class="small" x="490" y="76" text-anchor="middle">if m/n &gt;= dual_density_on - primal-dual ON</text>
+
+  <rect class="c2" x="60" y="152" width="270" height="84" rx="10"/>
+  <text class="txt" x="195" y="182" text-anchor="middle">Step schedule</text>
+  <text class="small" x="195" y="205" text-anchor="middle">eta_t = eta / sqrt(t+1)</text>
+  <text class="small" x="195" y="224" text-anchor="middle">減衰 learning rate</text>
+
+  <rect class="c3" x="355" y="152" width="270" height="84" rx="10"/>
+  <text class="txt" x="490" y="182" text-anchor="middle">Gradient signal</text>
+  <text class="small" x="490" y="205" text-anchor="middle">g_t = 1 if clause UNSAT else 0</text>
+  <text class="small" x="490" y="224" text-anchor="middle">持続的な競合に集中</text>
+
+  <rect class="c4" x="650" y="152" width="270" height="84" rx="10"/>
+  <text class="txt" x="785" y="182" text-anchor="middle">Regularization</text>
+  <text class="small" x="785" y="205" text-anchor="middle">- lambda*(w_i_t - 1)</text>
+  <text class="small" x="785" y="224" text-anchor="middle">基準重みへ引き戻す</text>
+
+  <rect class="c1" x="240" y="304" width="500" height="88" rx="10"/>
+  <text class="txt" x="490" y="334" text-anchor="middle">Raw update</text>
+  <text class="small" x="490" y="357" text-anchor="middle">w_i_next = w_i + eta_t*(g_t - lambda*(w_i-1))</text>
+  <text class="small" x="490" y="376" text-anchor="middle">持続 UNSAT 句で増加し lambda で安定化</text>
+
+  <rect class="c5" x="240" y="442" width="500" height="84" rx="10"/>
+  <text class="txt" x="490" y="472" text-anchor="middle">Projection / clipping</text>
+  <text class="small" x="490" y="494" text-anchor="middle">w_i_next = clip(w_i_next, w_min, w_max)</text>
+  <text class="small" x="490" y="513" text-anchor="middle">重み範囲を制限</text>
+
+  <path class="line" d="M490 98 L490 152"/>
+  <path class="line" d="M330 194 L355 194"/>
+  <path class="line" d="M625 194 L650 194"/>
+  <path class="line" d="M490 236 L490 304"/>
+  <path class="line" d="M490 392 L490 442"/>
+
+  <path class="dash" d="M740 484 L952 484 L952 62 L650 62"/>
+  <text class="small" x="965" y="300" transform="rotate(90 965 300)">clause 選択への feedback</text>
+</svg>

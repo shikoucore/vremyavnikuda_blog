@@ -1,0 +1,71 @@
+<svg viewBox="0 0 980 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Pipeline: prototype algorithm 8C2</title>
+  <desc id="desc">stochastic local search の1ステップ（make/break scoring と primal-dual 重み更新）</desc>
+  <defs>
+    <marker id="arrow-solid" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#22d3ee" />
+    </marker>
+    <marker id="arrow-dashed" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#94a3b8" />
+    </marker>
+    <style>
+      .bg { fill: #020617; }
+      .box { fill: #0f172a; stroke: #22d3ee; stroke-width: 2; rx: 10; }
+      .box-accent { fill: #083344; stroke: #22d3ee; stroke-width: 2; rx: 10; }
+      .box-warm { fill: #3f2a00; stroke: #f59e0b; stroke-width: 2; rx: 10; }
+      .txt { fill: #e2e8f0; font-family: 'Cascadia Code', 'JetBrains Mono', monospace; font-size: 14px; }
+      .caption { fill: #94a3b8; font-family: 'Cascadia Code', 'JetBrains Mono', monospace; font-size: 12px; }
+      .formula { fill: #94a3b8; font-family: 'Cascadia Code', 'JetBrains Mono', monospace; font-size: 11px; }
+      .line { stroke: #22d3ee; stroke-width: 2.5; fill: none; marker-end: url(#arrow-solid); }
+      .line-d { stroke: #94a3b8; stroke-width: 1.8; fill: none; stroke-dasharray: 6 6; marker-end: url(#arrow-dashed); }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="980" height="620" />
+
+  <rect class="box-accent" x="350" y="24" width="280" height="64" rx="10" />
+  <text class="txt" x="490" y="50" text-anchor="middle">UNSAT句の選択</text>
+  <text class="caption" x="490" y="70" text-anchor="middle">dense-gated clause selection</text>
+
+  <rect class="box" x="350" y="132" width="280" height="64" rx="10" />
+  <text class="txt" x="490" y="158" text-anchor="middle">候補 v の評価</text>
+  <text class="caption" x="490" y="178" text-anchor="middle">make / break / novelty</text>
+
+  <rect class="box-warm" x="40" y="242" width="280" height="76" rx="10" />
+  <text class="txt" x="180" y="270" text-anchor="middle">Zero-break 分岐</text>
+  <text class="caption" x="180" y="292" text-anchor="middle">break(v)=0 の場合はランダム選択</text>
+
+  <rect class="box" x="350" y="242" width="280" height="76" rx="10" />
+  <text class="txt" x="490" y="270" text-anchor="middle">確率的選択</text>
+  <text class="caption" x="490" y="292" text-anchor="middle">p(v) は scoring に比例</text>
+
+  <rect class="box-accent" x="660" y="242" width="280" height="76" rx="10" />
+  <text class="txt" x="800" y="270" text-anchor="middle">変数のフリップ</text>
+  <text class="caption" x="800" y="292" text-anchor="middle">式の状態を更新</text>
+
+  <rect class="box" x="660" y="364" width="280" height="84" rx="10" />
+  <text class="txt" x="800" y="392" text-anchor="middle">Primal-dual 更新</text>
+  <text class="formula" x="800" y="412" text-anchor="middle">grad = g_t - lambda*(w - 1)</text>
+  <text class="formula" x="800" y="427" text-anchor="middle">w_next = clip(w + eta_t*grad)</text>
+  <text class="formula" x="800" y="442" text-anchor="middle">eta_t = eta / sqrt(t+1)</text>
+
+  <rect class="box-accent" x="350" y="492" width="280" height="84" rx="10" />
+  <text class="txt" x="490" y="520" text-anchor="middle">次の反復</text>
+  <text class="caption" x="490" y="542" text-anchor="middle">steps &lt; budget かつ S(x) が最大でない間</text>
+  <text class="caption" x="490" y="560" text-anchor="middle">通常 budget = 180</text>
+
+  <path class="line" d="M490 88 L490 132" />
+  <path class="line" d="M490 196 L490 242" />
+  <path class="line" d="M630 280 L660 280" />
+  <path class="line" d="M800 318 L800 364" />
+  <path class="line" d="M800 448 L800 534 L630 534" />
+
+  <path class="line-d" d="M350 280 L320 280" />
+  <path class="line-d" d="M180 318 L180 534 L350 534" />
+  <path class="line-d" d="M940 406 L968 406 L968 56 L630 56" />
+  <circle cx="940" cy="406" r="3" fill="#94a3b8" />
+  <text class="caption" x="335" y="232" text-anchor="middle">break(v)=0 の場合</text>
+  <rect x="696" y="38" width="228" height="40" fill="#020617" opacity="0.95" />
+  <text class="caption" x="810" y="54" text-anchor="middle">clause 重みの feedback</text>
+  <text class="caption" x="810" y="68" text-anchor="middle">primal-dual から clause 選択へ</text>
+</svg>
